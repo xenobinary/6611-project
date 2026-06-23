@@ -2,6 +2,8 @@ bin/
 testbin/
 
 *.class
+*.puml
+
 project_description.pdf
 ibank.db
 1.md

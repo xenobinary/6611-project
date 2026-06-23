@@ -205,6 +205,7 @@ note right of UCS2
 end note
 @enduml
 ```
+![Use Case Diagram](../out/d2/usecase/usecase.png)
 
 #### 2.23 Use Case Definitions
 
@@ -489,7 +490,7 @@ TransactionController --> DatabaseManager
 AuthenticationController --> DatabaseManager
 @enduml
 ```
-
+![Class Diagram](../out/d2/class/class.png)
 ---
 
 ### 3.2 Model Layer Design
@@ -679,7 +680,7 @@ authenticate(cardNumber, pin)
                  ┌─────────────────┐            │
                  │ TechnicianPanel │────────────┘
                  └─────────────────┘
-
+```
 `MainFrame` uses `CardLayout` with four main cards: `"login"`, `"client"`, `"admin"`, `"tech"`, plus a `"language"` selector overlay.
 
 #### 5.12 LoginPanel
@@ -776,7 +777,7 @@ repeat
 repeat while (not Logout?)
 @enduml
 ```
-
+![Client Transaction Flow](../out/d2/client_transaction/client_transaction.png)
 #### 5.22 Admin Flow
 
 ```plantuml
@@ -813,7 +814,7 @@ repeat
 repeat
 @enduml
 ```
-
+![Admin Flow](../out/d2/admin_flow/admin_flow.png)
 #### 5.23 Technician Flow
 
 ```plantuml
@@ -835,7 +836,7 @@ endif
 repeat
 @enduml
 ```
-
+![Technician Flow](../out/d2/technician_flow/technician_flow.png)
 ---
 
 ## 6. Sequence & Data Flow Diagrams
@@ -920,6 +921,7 @@ MainFrame -> MainFrame: showResult("Success")
 MainFrame -> DatabaseManager: updateAccountBalance(acc)
 @enduml
 ```
+![Withdraw Cash Sequence](../out/d2/withdraw/withdraw.png)
 
 #### 6.22 Switch Language (UC-11)
 
@@ -947,7 +949,7 @@ MainFrame -> Btns: Update side button labels
 MainFrame -> Center: Update center content
 @enduml
 ```
-
+![Switch Language Sequence](../out/d2/switch_lang/switch_lang.png)
 #### 6.23 Authenticate User (UC-01)
 
 ```plantuml
@@ -992,7 +994,7 @@ else PIN valid
 end
 @enduml
 ```
-
+![Authenticate User Sequence](../out/d2/authenticate/authenticate.png)
 ---
 
 ## 7. System Behaviors & Architecture Policies
@@ -1088,12 +1090,67 @@ All classes are in the default (unnamed) package. This simplifies compilation fo
 | Unit | `test/ModelTests.java` | 24 | User auth, Account ops, CashBox, ExchangeRate, TransactionRecord, PIN hashing, roles |
 | Integration | `test/IntegrationTests.java` | 22 | Auth flow, withdraw/deposit/transfer validation, daily limits, cross-currency, per-user history, persistence, cash box, lockout |
 
-Run: `./d2/test.sh`
+Run:
+- Linux: `./d2/test.sh`
+- macOS: `./d2/test_macos.sh`
+- Windows: `d2\\test_windows.bat`
+
+---
+
+### 8.3 Compilation & Execution
+
+From the repository root:
+
+```bash
+cd d2
+chmod +x run.sh test.sh run_macos.sh test_macos.sh
+```
+
+Linux:
+
+```bash
+./run.sh
+./test.sh
+```
+
+macOS:
+
+```bash
+./run_macos.sh
+./test_macos.sh
+```
+
+Windows (Command Prompt):
+
+```bat
+run_windows.bat
+test_windows.bat
+```
+
+Manual compile and run (Linux/macOS, equivalent to `run.sh`):
+
+```bash
+cd d2
+mkdir -p bin
+
+javac -cp "lib/sqlite-jdbc.jar:lib/slf4j-api.jar:lib/slf4j-nop.jar" \
+  -d bin -sourcepath src \
+  src/models/*.java \
+  src/exceptions/*.java \
+  src/controllers/*.java \
+  src/views/*.java
+
+cp -r src/resources bin/
+
+java -cp "bin:lib/sqlite-jdbc.jar:lib/slf4j-api.jar:lib/slf4j-nop.jar" MainFrame
+```
+
+Notes:
+- The project uses the default (unnamed) Java package, so `MainFrame` is launched directly.
+- Persistent database file is created at `~/.ibank.db` on Linux/macOS and `%USERPROFILE%\\.ibank.db` on Windows.
+- Linux/macOS classpath separator is `:`. Windows classpath separator is `;`.
+- Platform scripts provided: `run.sh`, `test.sh`, `run_macos.sh`, `test_macos.sh`, `run_windows.bat`, `test_windows.bat`.
 
 ---
 
 *End of Design Document*
-
-### 8.3 Compilation & Execution
-
-```bash
