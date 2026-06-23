@@ -306,37 +306,43 @@ All classes are in the default (unnamed) package. This simplifies compilation fo
 ## 8. Data Flow: Key Use Cases
 
 ### 8.1 Withdraw (single currency)
-```
-ClientDashboardPanel                  TransactionController        Account
-      │                                      │                      │
-      ├─ handleWithdraw()                    │                      │
-      │   ├─ selectAccount() → Account       │                      │
-      │   ├─ JOptionPane → amount            │                      │
-      │   ├─ transactionController           │                      │
-      │   │   .withdraw(acc, amt)───────────▶│                      │
-      │   │                                  ├─ acc.withdraw(amt)──▶│
-      │   │                                  │◀───── true/false ────┤
-      │   │◀────── result string ────────────┤                      │
-      │   ├─ outputArea.setText(result)      │                      │
-      │   └─ refreshAccountTable()           │                      │
+```mermaid
+sequenceDiagram
+    participant C as ClientDashboardPanel
+    participant T as TransactionController
+    participant A as Account
+    
+    C->>C: handleWithdraw()
+    C->>C: selectAccount() -> Account
+    C->>C: amount input
+    C->>T: withdraw(acc, amt)
+    T->>A: acc.withdraw(amt)
+    A-->>T: true/false
+    T-->>C: result string
+    C->>C: update UI
 ```
 
 ### 8.2 Cross-Currency Transfer
-```
-ClientDashboardPanel    TransactionController    ExchangeRateManager    Account(from)    Account(to)
-      │                        │                       │                    │               │
-      ├─ transfer(from,to,amt)─▶                       │                    │               │
-      │                        ├─ validate(amt>0)      │                    │               │
-      │                        ├─ validate(from≠to)    │                    │               │
-      │                        ├─ validate(balance)───▶│                    │               │
-      │                        │◀────── OK ────────────┤                    │               │
-      │                        ├─ from.currency ≠ to.currency?              │               │
-      │                        │   ├─ erm.convert(amt, from, to)───────────▶│               │
-      │                        │   │◀── convertedAmount ───────────────────┤               │
-      │                        ├─ from.withdraw(amt)──────────────────────────────────────▶│
-      │                        ├─ to.deposit(converted)────────────────────────────────────────────────▶│
-      │                        ├─ log history         │                    │               │
-      │◀── result ────────────┤                       │                    │               │
+```mermaid
+sequenceDiagram
+    participant C as ClientDashboardPanel
+    participant T as TransactionController
+    participant E as ExchangeRateManager
+    participant AF as Account(from)
+    participant AT as Account(to)
+
+    C->>T: transfer(from,to,amt)
+    T->>T: validate(amt>0)
+    T->>T: validate(from≠to)
+    T->>T: validate(balance)
+    alt from.currency ≠ to.currency
+        T->>E: convert(amt, from, to)
+        E-->>T: convertedAmount
+    end
+    T->>AF: from.withdraw(amt)
+    T->>AT: to.deposit(converted)
+    T->>T: log history
+    T-->>C: result
 ```
 
 ---
