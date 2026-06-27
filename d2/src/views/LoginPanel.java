@@ -3,14 +3,35 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+/**
+ * Login panel displaying a card selector dropdown and PIN entry via the numpad.
+ * Authenticates users and routes them to the appropriate dashboard
+ * (client, admin, or technician) based on their role.
+ */
 public class LoginPanel extends BaseViewPanel implements NumpadListener {
+    /** Dropdown for selecting a bank card. */
     private JComboBox<String> cardCombo;
-    private JLabel pinLbl, loginMsg, cardLbl, pinPromptLbl;
+    /** Label showing the entered PIN as masked characters. */
+    private JLabel pinLbl;
+    /** Label for displaying login error messages. */
+    private JLabel loginMsg;
+    /** Label for the card selector instruction. */
+    private JLabel cardLbl;
+    /** Label for the PIN entry instruction. */
+    private JLabel pinPromptLbl;
+    /** Buffer for the entered PIN digits. */
     private String pinBuf = "";
     
+    /** Display strings for the card combo options. */
     private String[] cardOpts;
+    /** Internal card number values corresponding to combo options. */
     private String[] cardVals;
 
+    /**
+     * Constructs a LoginPanel.
+     *
+     * @param router the router for navigation and controller access
+     */
     public LoginPanel(Router router) {
         super(router);
         numpadPanel.addNumpadListener(this);
@@ -149,6 +170,7 @@ public class LoginPanel extends BaseViewPanel implements NumpadListener {
         loginMsg.setText(""); 
     }
 
+    /** Updates the PIN display with asterisks for entered digits and underscores for remaining. */
     private void refreshPin() {
         StringBuilder sb = new StringBuilder();
         for (int j = 0; j < pinBuf.length(); j++) sb.append("* ");
@@ -156,6 +178,11 @@ public class LoginPanel extends BaseViewPanel implements NumpadListener {
         pinLbl.setText(sb.toString().trim());
     }
 
+    /**
+     * Attempts to authenticate the user and navigates to the appropriate dashboard.
+     *
+     * @param cn the card number to authenticate with
+     */
     private void tryLogin(String cn) {
         AuthenticationController auth = router.getAuthController();
         try {

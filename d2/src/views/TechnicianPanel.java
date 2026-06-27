@@ -2,10 +2,22 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 
+/**
+ * Panel for the technician view. Displays the current cash box status
+ * (current cash, max capacity, low threshold) and provides a refill button
+ * to restore the cash box to its maximum capacity.
+ */
 public class TechnicianPanel extends BaseViewPanel implements NumpadListener {
+    /** Table model for displaying cash box status. */
     private DefaultTableModel listModel;
+    /** Table for displaying cash box data. */
     private JTable listTable;
 
+    /**
+     * Constructs a TechnicianPanel.
+     *
+     * @param router the router for navigation and controller access
+     */
     public TechnicianPanel(Router router) {
         super(router);
         numpadPanel.addNumpadListener(this);
@@ -73,6 +85,7 @@ public class TechnicianPanel extends BaseViewPanel implements NumpadListener {
         numpadPanel.setCancelText(i18n.get("button.cancel", "Cancel"));
     }
 
+    /** Refreshes the cash box status table with current values. */
     private void refreshTech() {
         centerTitle.setText(i18n.get("tech.title", "Technician Panel"));
         CashBox cb = CashBox.getInstance();

@@ -5,16 +5,35 @@ import java.util.Map;
 import java.util.List;
 import java.util.ArrayList;
 
+/**
+ * Admin dashboard panel providing functions to update exchange rates
+ * and unlock locked client accounts. Uses sub-states to manage the flow
+ * between rate selection, rate input, and user unlock screens.
+ */
 public class AdminDashboardPanel extends BaseViewPanel implements NumpadListener {
+    /** Table model for data display. */
     private DefaultTableModel listModel;
+    /** Table for displaying lists. */
     private JTable listTable;
     
-    private String subState = "welcome"; // welcome, rate_select, rate_input, unlock
+    /**
+     * Current sub-state: "welcome", "rate_select", "rate_input", or "unlock".
+     */
+    private String subState = "welcome";
+    /** Buffer for numeric rate input. */
     private StringBuilder buf = new StringBuilder("0");
+    /** Whether a decimal point has been entered in the current rate input. */
     private boolean dotEntered = false;
+    /** The currently selected currency pair for rate editing. */
     private String selectedPair = null;
+    /** List of users (BankClients) shown in the unlock screen. */
     private List<User> lockedClients;
 
+    /**
+     * Constructs an AdminDashboardPanel.
+     *
+     * @param router the router for navigation and controller access
+     */
     public AdminDashboardPanel(Router router) {
         super(router);
         numpadPanel.addNumpadListener(this);
@@ -81,6 +100,7 @@ public class AdminDashboardPanel extends BaseViewPanel implements NumpadListener
         numpadPanel.setCancelText(i18n.get("button.cancel", "Cancel"));
     }
 
+    /** Shows the main admin welcome dashboard. */
     private void adminDashboard() {
         subState = "welcome";
         centerTitle.setText(i18n.get("admin.title", "Administrator Panel"));
@@ -93,6 +113,7 @@ public class AdminDashboardPanel extends BaseViewPanel implements NumpadListener
         rightBtns[3].setVisible(false);
     }
 
+    /** Shows the exchange rate selection screen listing all configured currency pairs. */
     private void adminRateSelect() {
         subState = "rate_select";
         centerTitle.setText(i18n.get("admin.exchangeRates", "Exchange Rates"));
@@ -108,6 +129,7 @@ public class AdminDashboardPanel extends BaseViewPanel implements NumpadListener
         setupArrowButtons();
     }
 
+    /** Shows the rate input screen for a given currency pair. */
     private void adminRateInput(String pair) {
         subState = "rate_input";
         selectedPair = pair;
@@ -124,6 +146,7 @@ public class AdminDashboardPanel extends BaseViewPanel implements NumpadListener
         rightBtns[2].setVisible(false); rightBtns[3].setVisible(false);
     }
 
+    /** Shows the unlock screen listing all BankClient users and their lock status. */
     private void adminUnlock() {
         subState = "unlock";
         centerTitle.setText(i18n.get("button.unlock", "Unlock User"));
@@ -146,6 +169,7 @@ public class AdminDashboardPanel extends BaseViewPanel implements NumpadListener
         setupArrowButtons();
     }
 
+    /** Enables up/down arrow buttons for navigating list selections. */
     private void setupArrowButtons() {
         rightBtns[2].setVisible(true); rightBtns[3].setVisible(true);
         rightBtns[2].setText(h("button.up", "\u25B2"));

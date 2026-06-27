@@ -1,21 +1,41 @@
 import javax.swing.*;
 import java.awt.*;
 
+/**
+ * The main application window for the iBank ABM system.
+ * Acts as the top-level container, manages navigation between views via CardLayout,
+ * and holds references to shared controllers (authentication, transactions, i18n).
+ */
 public class MainFrame extends JFrame implements Router, I18nController.I18nListener {
+    /** The internationalization controller for localized text. */
     private I18nController i18n;
+    /** The authentication controller shared across views. */
     private AuthenticationController auth;
+    /** The transaction controller shared across views. */
     private TransactionController txn;
 
+    /** The central panel using CardLayout for view switching. */
     private JPanel centerPanel;
+    /** The CardLayout used for switching between views. */
     private CardLayout centerCards;
+    /** The title label in the header bar. */
     private JLabel titleLabel;
     
+    /** The login view panel. */
     private LoginPanel loginPanel;
+    /** The client dashboard view panel. */
     private ClientDashboardPanel clientPanel;
+    /** The admin dashboard view panel. */
     private AdminDashboardPanel adminPanel;
+    /** The technician view panel. */
     private TechnicianPanel techPanel;
+    /** The language selector view panel. */
     private LanguageSelectorPanel languagePanel;
 
+    /**
+     * Constructs the main frame, initializes controllers, builds the UI,
+     * and navigates to the login screen.
+     */
     public MainFrame() {
         auth = new AuthenticationController();
         txn = new TransactionController();
@@ -25,6 +45,7 @@ public class MainFrame extends JFrame implements Router, I18nController.I18nList
         navigateTo("login");
     }
 
+    /** Builds the complete UI: header bar + card-layout center + all panels. */
     private void buildUI() {
         setTitle("iBank ABM");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -54,6 +75,7 @@ public class MainFrame extends JFrame implements Router, I18nController.I18nList
         setContentPane(shell);
     }
 
+    /** Creates the top header bar with the application title. */
     private JPanel header() {
         JPanel p = new JPanel(new BorderLayout());
         p.setBackground(new Color(0, 51, 102));
@@ -110,6 +132,11 @@ public class MainFrame extends JFrame implements Router, I18nController.I18nList
         titleLabel.setText(i18n.get("title.app", "iBank ABM"));
     }
 
+    /**
+     * Application entry point. Initializes the i18n controller and launches the GUI.
+     *
+     * @param args command-line arguments (unused)
+     */
     public static void main(String[] args) {
         I18nController.getInstance();
         SwingUtilities.invokeLater(() -> new MainFrame().setVisible(true));

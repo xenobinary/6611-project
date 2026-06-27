@@ -5,19 +5,44 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
 
+/**
+ * Client dashboard panel providing the main banking interface.
+ * Supports withdraw, deposit, transfer, balance inquiry, and transaction history.
+ * Uses sub-states to manage the flow through account selection, amount entry,
+ * and transaction confirmation.
+ */
 public class ClientDashboardPanel extends BaseViewPanel implements NumpadListener {
+    /** Table model for data display. */
     private DefaultTableModel listModel;
+    /** Table for displaying account lists and data. */
     private JTable listTable;
     
+    /** The current transaction action ("withdraw", "deposit", "transfer", "balance", "history"). */
     private String action;
-    private Account selectedAcc, destAcc;
+    /** The currently selected source account. */
+    private Account selectedAcc;
+    /** The currently selected destination account (for transfers). */
+    private Account destAcc;
+    /** List of accounts available for selection. */
     private List<Account> accList;
+    /** Index within accList of the currently highlighted item. */
     private int accIdx;
     
-    private String subState = "welcome"; // welcome, balances, acc_select, dest_select, amount, confirm, history
+    /**
+     * Current sub-state: "welcome", "balances", "acc_select", "dest_select",
+     * "amount", "confirm", "history", or "result".
+     */
+    private String subState = "welcome";
+    /** Buffer for amount entry. */
     private StringBuilder amountBuf = new StringBuilder("0");
+    /** Whether a decimal point has been entered in the amount. */
     private boolean dotEntered = false;
 
+    /**
+     * Constructs a ClientDashboardPanel.
+     *
+     * @param router the router for navigation and controller access
+     */
     public ClientDashboardPanel(Router router) {
         super(router);
         numpadPanel.addNumpadListener(this);
@@ -99,6 +124,15 @@ public class ClientDashboardPanel extends BaseViewPanel implements NumpadListene
         numpadPanel.setCancelText(i18n.get("button.cancel", "Cancel"));
     }
 
+    /**
+     * Restores the client dashboard state after returning from the language selector.
+     *
+     * @param act       the action in progress
+     * @param acc       the selected account (null if none)
+     * @param dest      the destination account (null if none)
+     * @param isHistory whether the user was viewing history
+     * @param isBalance whether the user was viewing balances
+     */
     public void restoreState(String act, Account acc, Account dest, boolean isHistory, boolean isBalance) {
         onShow();
         this.action = act;
@@ -119,6 +153,7 @@ public class ClientDashboardPanel extends BaseViewPanel implements NumpadListene
         }
     }
 
+    /** Highlights the specified side button to indicate the active selection. */
     private void highlightSideBtn(String which) {
         Color base = new Color(0, 80, 140);
         Color hl = new Color(255, 180, 40);
@@ -136,6 +171,7 @@ public class ClientDashboardPanel extends BaseViewPanel implements NumpadListene
         }
     }
 
+    /** Shows the welcome screen with the user's name. */
     private void showWelcome() {
         subState = "welcome";
         highlightSideBtn(null);
@@ -150,6 +186,7 @@ public class ClientDashboardPanel extends BaseViewPanel implements NumpadListene
         rightBtns[3].setVisible(false);
     }
 
+    /** Shows the account balances for the current client. */
     private void showBalances() {
         subState = "balances";
         rightBtns[2].setVisible(false);
@@ -168,6 +205,7 @@ public class ClientDashboardPanel extends BaseViewPanel implements NumpadListene
         centerText.setText("");
     }
 
+    /** Shows the transaction history for the current client. */
     private void showHistory() {
         subState = "history";
         rightBtns[2].setVisible(false);
@@ -186,6 +224,7 @@ public class ClientDashboardPanel extends BaseViewPanel implements NumpadListene
         centerText.setText("");
     }
 
+    /** Navigates to the account selection step. */
     private void toAccountSelect() {
         subState = "acc_select";
         BankClient c = (BankClient) router.getAuthController().getCurrentUser();
@@ -215,6 +254,7 @@ public class ClientDashboardPanel extends BaseViewPanel implements NumpadListene
         numpadPanel.setCancelText(i18n.get("button.cancel", "Cancel"));
     }
 
+    /** Refreshes the account list display with the current selection highlighted. */
     private void refreshAccList() {
         listModel.setColumnIdentifiers(new String[]{
                 i18n.get("table.accountNumber", "Account #"),
@@ -237,6 +277,7 @@ public class ClientDashboardPanel extends BaseViewPanel implements NumpadListene
         }
     }
 
+    /** Navigates to the destination account selection step (for transfers). */
     private void toDestSelect() {
         subState = "dest_select";
         BankClient c = (BankClient) router.getAuthController().getCurrentUser();
@@ -253,6 +294,7 @@ public class ClientDashboardPanel extends BaseViewPanel implements NumpadListene
         });
     }
 
+    /** Refreshes the destination account list (excluding the source account). */
     private void refreshDestList() {
         listModel.setColumnIdentifiers(new String[]{
                 i18n.get("table.accountNumber", "Account #"),
@@ -275,6 +317,7 @@ public class ClientDashboardPanel extends BaseViewPanel implements NumpadListene
         }
     }
 
+    /** Navigates to the amount entry step. */
     private void toAmountEntry() {
         subState = "amount";
         centerTitle.setText(action.equals("transfer")
@@ -300,6 +343,7 @@ public class ClientDashboardPanel extends BaseViewPanel implements NumpadListene
         numpadPanel.setOkText(i18n.get("button.ok", "OK"));
     }
 
+    /** Shows the confirmation screen before executing a transaction. */
     private void toConfirm(double amount) {
         subState = "confirm";
         centerTitle.setText(i18n.get("label.confirm", "Confirm") + " " + i18n.get("menu."+action, action) + "?");
@@ -314,6 +358,7 @@ public class ClientDashboardPanel extends BaseViewPanel implements NumpadListene
         centerText.setText(i18n.get("label.pressConfirm", "Press OK to confirm, Cancel to abort"));
     }
 
+    /** Shows the transaction result and auto-navigates back to the welcome screen. */
     private void showResult(String result) {
         subState = "result";
         centerTitle.setText(i18n.get("label.transactionComplete", "Transaction Complete"));
@@ -327,6 +372,7 @@ public class ClientDashboardPanel extends BaseViewPanel implements NumpadListene
         t.setRepeats(false); t.start();
     }
 
+    /** Sets up the up/down arrow buttons for list navigation. */
     private void setupArrowButtons(Runnable upAction, Runnable downAction) {
         rightBtns[2].setVisible(true); rightBtns[3].setVisible(true);
         rightBtns[2].setText(h("button.up", "\u25B2"));
@@ -337,6 +383,7 @@ public class ClientDashboardPanel extends BaseViewPanel implements NumpadListene
         rightBtns[3].addActionListener(e -> downAction.run());
     }
 
+    /** Convenience method for retrieving localized account type strings. */
     private String t(String key) { return i18n.get("account." + key, key); }
 
     // --- Numpad Listener ---

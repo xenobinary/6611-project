@@ -5,12 +5,32 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * A reusable numeric keypad panel with digits 0-9, dot, clear, delete,
+ * OK/enter, and cancel buttons. Notifies registered {@link NumpadListener}s
+ * of user input. Also responds to language changes for button labels.
+ */
 public class NumpadPanel extends JPanel implements I18nController.I18nListener {
+    /** Numeric buttons 0-9. */
     private JButton[] numBtns;
-    private JButton clrBtn, delBtn, okBtn, cancelBtn, dotBtn;
+    /** Clear button. */
+    private JButton clrBtn;
+    /** Delete/backspace button. */
+    private JButton delBtn;
+    /** OK/enter button. */
+    private JButton okBtn;
+    /** Cancel button. */
+    private JButton cancelBtn;
+    /** Decimal point button. */
+    private JButton dotBtn;
+    /** Registered numpad event listeners. */
     private List<NumpadListener> listeners = new ArrayList<>();
+    /** The i18n controller for localized labels. */
     private I18nController i18n;
 
+    /**
+     * Constructs the numpad with a 4x4 grid layout and binds all button actions.
+     */
     public NumpadPanel() {
         i18n = I18nController.getInstance();
         i18n.addListener(this);
@@ -61,6 +81,13 @@ public class NumpadPanel extends JPanel implements I18nController.I18nListener {
         bindActions();
     }
 
+    /**
+     * Creates a styled numeric button.
+     *
+     * @param t         the digit label
+     * @param raisedDot whether to show a raised dot indicator
+     * @return the styled button
+     */
     private JButton numBtn(String t, boolean raisedDot) {
         String html = "<html><center>"
                 + "<span style='font-size:20pt;font-weight:bold'>" + t + "</span>"
@@ -72,6 +99,14 @@ public class NumpadPanel extends JPanel implements I18nController.I18nListener {
         return b;
     }
 
+    /**
+     * Creates a styled action button with custom colors.
+     *
+     * @param t  the button label
+     * @param bg the background color
+     * @param fg the foreground color
+     * @return the styled button
+     */
     private JButton actionBtn(String t, Color bg, Color fg) {
         JButton b = new JButton("<html><center>" + t + "</center></html>");
         b.setFont(new Font("SansSerif", Font.BOLD, 14));
@@ -81,18 +116,34 @@ public class NumpadPanel extends JPanel implements I18nController.I18nListener {
         return b;
     }
 
+    /**
+     * Registers a listener for numpad input events.
+     *
+     * @param listener the listener to add
+     */
     public void addNumpadListener(NumpadListener listener) {
         listeners.add(listener);
     }
 
+    /**
+     * Updates the text on the OK button.
+     *
+     * @param text the new text
+     */
     public void setOkText(String text) {
         okBtn.setText("<html><center>\u25EF " + text + "</center></html>");
     }
 
+    /**
+     * Updates the text on the Cancel button.
+     *
+     * @param text the new text
+     */
     public void setCancelText(String text) {
         cancelBtn.setText("<html><center>X " + text + "</center></html>");
     }
 
+    /** Binds action listeners to all numpad buttons to notify registered listeners. */
     private void bindActions() {
         for (int i = 0; i <= 9; i++) {
             final int d = i;

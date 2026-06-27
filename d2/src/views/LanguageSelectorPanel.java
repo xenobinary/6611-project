@@ -4,14 +4,35 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+/**
+ * Panel for selecting the display language (English, French, Chinese).
+ * Preserves the pre-selection view state so the user returns to their
+ * previous screen after changing the language.
+ */
 public class LanguageSelectorPanel extends BaseViewPanel implements NumpadListener {
+    /** Table model for the language options. */
     private DefaultTableModel listModel;
+    /** Table displaying the language choices. */
     private JTable listTable;
 
-    private String preLangState, preLangAction;
-    private Account preLangAcc, preLangDest;
-    private boolean preLangHistory, preLangBalance;
+    /** The view state to return to after language selection. */
+    private String preLangState;
+    /** The action the user was performing (null if none). */
+    private String preLangAction;
+    /** The selected account before opening the language selector. */
+    private Account preLangAcc;
+    /** The destination account before opening the language selector. */
+    private Account preLangDest;
+    /** Whether the user was viewing history. */
+    private boolean preLangHistory;
+    /** Whether the user was viewing balances. */
+    private boolean preLangBalance;
 
+    /**
+     * Constructs a LanguageSelectorPanel.
+     *
+     * @param router the router for navigation and controller access
+     */
     public LanguageSelectorPanel(Router router) {
         super(router);
         numpadPanel.addNumpadListener(this);
@@ -40,6 +61,17 @@ public class LanguageSelectorPanel extends BaseViewPanel implements NumpadListen
         centerPanel.add(sp, BorderLayout.CENTER);
     }
 
+    /**
+     * Configures the pre-language-selection state so the user can return
+     * to the correct view after choosing a language.
+     *
+     * @param preLangState   the view state to return to
+     * @param preLangAction  the action in progress
+     * @param preLangAcc     the selected account (null if none)
+     * @param preLangDest    the destination account (null if none)
+     * @param preLangHistory whether the user was viewing history
+     * @param preLangBalance whether the user was viewing balances
+     */
     public void configure(String preLangState, String preLangAction, Account preLangAcc, Account preLangDest, boolean preLangHistory, boolean preLangBalance) {
         this.preLangState = preLangState;
         this.preLangAction = preLangAction;
@@ -95,6 +127,7 @@ public class LanguageSelectorPanel extends BaseViewPanel implements NumpadListen
         numpadPanel.setCancelText(i18n.get("button.cancel", "Cancel"));
     }
 
+    /** Navigates back to the view the user was on before opening the language selector. */
     private void restorePreLangState() {
         if ("client".equals(preLangState)) {
             router.navigateTo("client_restore");
@@ -142,9 +175,14 @@ public class LanguageSelectorPanel extends BaseViewPanel implements NumpadListen
         }
     }
 
+    /** @return the action the user was performing before opening the language selector */
     public String getPreLangAction() { return preLangAction; }
+    /** @return the selected account before opening the language selector */
     public Account getPreLangAcc() { return preLangAcc; }
+    /** @return the destination account before opening the language selector */
     public Account getPreLangDest() { return preLangDest; }
+    /** @return whether the user was viewing history */
     public boolean isPreLangHistory() { return preLangHistory; }
+    /** @return whether the user was viewing balances */
     public boolean isPreLangBalance() { return preLangBalance; }
 }

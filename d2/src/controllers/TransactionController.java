@@ -2,16 +2,42 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Controller that handles all financial transactions in the ABM system.
+ * Manages withdraw, deposit, and transfer operations with business rule
+ * enforcement (daily limits, per-transaction caps, currency restrictions)
+ * and maintains an in-memory transaction history for the current session.
+ */
 public class TransactionController {
+    /** In-memory list of transaction records for the current user session. */
     private List<TransactionRecord> transactionHistory;
+    /** Reference to the database manager for persistence. */
     private DatabaseManager db;
+    /** The card number of the currently authenticated user. */
     private String currentCardNumber;
 
+    /** Maximum withdrawal amount per transaction. */
+    private static final double MAX_WITHDRAW_PER_TXN = 500.0;
+    /** Maximum total withdrawal amount per day. */
+    private static final double MAX_WITHDRAW_PER_DAY = 2000.0;
+    /** Maximum deposit amount per transaction. */
+    private static final double MAX_DEPOSIT_PER_TXN = 2000.0;
+    /** Maximum total deposit amount per day. */
+    private static final double MAX_DEPOSIT_PER_DAY = 5000.0;
+
+    /**
+     * Constructs a new TransactionController with an empty history.
+     */
     public TransactionController() {
         db = DatabaseManager.getInstance();
         transactionHistory = new ArrayList<>();
     }
 
+    /**
+     * Sets the current user and loads their transaction history from the database.
+     *
+     * @param cardNumber the card number of the authenticated user
+     */
     public void setCurrentUser(String cardNumber) {
         this.currentCardNumber = cardNumber;
         transactionHistory.clear();
@@ -22,11 +48,21 @@ public class TransactionController {
         }
     }
 
-    private static final double MAX_WITHDRAW_PER_TXN = 500.0;
-    private static final double MAX_WITHDRAW_PER_DAY = 2000.0;
-    private static final double MAX_DEPOSIT_PER_TXN = 2000.0;
-    private static final double MAX_DEPOSIT_PER_DAY = 5000.0;
-
+    /**
+     * Performs a withdrawal from the specified account.
+     * Enforces multiple-of-20, per-transaction cap, daily limit, CAD-only,
+     * sufficient balance, and cash availability rules.
+     *
+     * @param account      the account to withdraw from
+     * @param amount       the amount to withdraw
+     * @param actionLabel  the localized label for the withdrawal action
+     * @param cashLowLabel the localized label for the low-cash warning
+     * @param fromWord     the localized word for "from"
+     * @param toWord       the localized word for "to"
+     * @return a formatted result string
+     * @throws InsufficientFundException if the account has insufficient funds
+     * @throws InvalidAmountException    if the amount violates business rules
+     */
     public String withdraw(Account account, double amount,
             String actionLabel, String cashLowLabel,
             String fromWord, String toWord)
@@ -74,6 +110,18 @@ public class TransactionController {
         return r.format(actionLabel, "", "", fromWord, toWord) + status;
     }
 
+    /**
+     * Performs a deposit into the specified account.
+     * Enforces multiple-of-20, per-transaction cap, daily limit, and CAD-only rules.
+     *
+     * @param account     the account to deposit into
+     * @param amount      the amount to deposit
+     * @param actionLabel the localized label for the deposit action
+     * @param fromWord    the localized word for "from"
+     * @param toWord      the localized word for "to"
+     * @return a formatted result string
+     * @throws InvalidAmountException if the amount violates business rules
+     */
     public String deposit(Account account, double amount, String actionLabel,
             String fromWord, String toWord)
             throws InvalidAmountException {
@@ -107,6 +155,20 @@ public class TransactionController {
         return r.format("", actionLabel, "", fromWord, toWord);
     }
 
+    /**
+     * Performs a transfer between two accounts, with automatic currency conversion
+     * if the accounts use different currencies.
+     *
+     * @param from        the source account
+     * @param to          the destination account
+     * @param amount      the amount to transfer in the source currency
+     * @param actionLabel the localized label for the transfer action
+     * @param fromWord    the localized word for "from"
+     * @param toWord      the localized word for "to"
+     * @return a formatted result string
+     * @throws InsufficientFundException if the source account has insufficient funds
+     * @throws InvalidAmountException    if the amount is invalid or source equals destination
+     */
     public String transfer(Account from, Account to, double amount, String actionLabel,
             String fromWord, String toWord)
             throws InsufficientFundException, InvalidAmountException {
@@ -142,6 +204,16 @@ public class TransactionController {
         return r.format("", "", actionLabel, fromWord, toWord);
     }
 
+    /**
+     * Returns a formatted list of all transactions for the current user session.
+     *
+     * @param wLabel   the localized label for withdrawals
+     * @param dLabel   the localized label for deposits
+     * @param tLabel   the localized label for transfers
+     * @param fromWord the localized word for "from"
+     * @param toWord   the localized word for "to"
+     * @return a list of formatted transaction strings
+     */
     public List<String> getFormattedHistory(String wLabel, String dLabel,
             String tLabel, String fromWord, String toWord) {
         List<String> result = new ArrayList<>();

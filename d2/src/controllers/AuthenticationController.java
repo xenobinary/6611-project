@@ -2,11 +2,22 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Controller that manages user authentication, session state, and user persistence.
+ * Handles login, logout, PIN verification against the database, account locking,
+ * and persisting user and account state changes.
+ */
 public class AuthenticationController {
+    /** In-memory cache of all users, keyed by card number. */
     private Map<String, User> userDatabase;
+    /** The currently authenticated user, or null if no one is logged in. */
     private User currentUser;
+    /** Reference to the database manager for persistence. */
     private DatabaseManager db;
 
+    /**
+     * Constructs a new AuthenticationController and loads all users from the database.
+     */
     public AuthenticationController() {
         userDatabase = new HashMap<>();
         currentUser = null;
@@ -18,6 +29,16 @@ public class AuthenticationController {
         }
     }
 
+    /**
+     * Authenticates a user with the given card number and PIN.
+     * On success, the current user is set. On failure, the failed attempt counter
+     * is incremented and the account may be locked.
+     *
+     * @param cardNumber the card number to authenticate
+     * @param pin        the PIN to verify
+     * @return the authenticated User, or null if authentication failed
+     * @throws AccountLockedException if the account is locked or becomes locked
+     */
     public User authenticate(String cardNumber, String pin)
             throws AccountLockedException {
         User user = userDatabase.get(cardNumber);
@@ -55,18 +76,36 @@ public class AuthenticationController {
         return user;
     }
 
+    /**
+     * Logs out the current user by setting currentUser to null.
+     */
     public void logout() {
         currentUser = null;
     }
 
+    /**
+     * Returns the currently authenticated user.
+     *
+     * @return the current user, or null if not logged in
+     */
     public User getCurrentUser() {
         return currentUser;
     }
 
+    /**
+     * Returns the entire in-memory user database.
+     *
+     * @return a map of card numbers to User objects
+     */
     public Map<String, User> getUserDatabase() {
         return userDatabase;
     }
 
+    /**
+     * Persists the given account's balance to the database.
+     *
+     * @param account the account to persist
+     */
     public void persistAccount(Account account) {
         try {
             db.updateAccountBalance(account);
@@ -75,6 +114,11 @@ public class AuthenticationController {
         }
     }
 
+    /**
+     * Persists the given user's lock state and failed attempts to the database.
+     *
+     * @param user the user to persist
+     */
     public void persistUserState(User user) {
         try {
             db.updateUserState(user);

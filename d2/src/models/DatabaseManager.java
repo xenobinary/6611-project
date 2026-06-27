@@ -7,11 +7,23 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Singleton database manager for the iBank ABM system.
+ * Handles SQLite database connection, schema creation, data seeding,
+ * and all CRUD operations for users, accounts, exchange rates, and transactions.
+ */
 public class DatabaseManager {
+    /** The singleton instance. */
     private static DatabaseManager instance;
+    /** The active JDBC connection. */
     private Connection conn;
+    /** The filesystem path to the SQLite database file. */
     private static final String DB_PATH = System.getProperty("user.dir") + "/ibank.db";
 
+    /**
+     * Private constructor. Initializes the SQLite connection and creates
+     * the schema/seed data if the database file does not already exist.
+     */
     private DatabaseManager() {
         try {
             Class.forName("org.sqlite.JDBC");
@@ -27,13 +39,22 @@ public class DatabaseManager {
         }
     }
 
+    /**
+     * Returns the singleton DatabaseManager instance.
+     *
+     * @return the instance
+     */
     public static DatabaseManager getInstance() {
         if (instance == null) instance = new DatabaseManager();
         return instance;
     }
 
+    /**
+     * Resets the singleton instance (mainly for testing).
+     */
     public static void resetInstance() { instance = null; }
 
+    /** Creates the database schema (users, accounts, exchange_rates, transactions tables). */
     private void createSchema() throws SQLException {
         Statement s = conn.createStatement();
         s.execute("CREATE TABLE users ("
@@ -60,6 +81,7 @@ public class DatabaseManager {
                 + "created_at TEXT NOT NULL)");
     }
 
+    /** Seeds the database with initial user, account, and exchange rate data. */
     private void seedData() throws SQLException {
         String aliceHash = hash("1234");
         String bobHash = hash("5678");
@@ -109,6 +131,12 @@ public class DatabaseManager {
         }
     }
 
+    /**
+     * Computes the SHA-256 hash of the given input string.
+     *
+     * @param input the string to hash
+     * @return the hexadecimal hash string
+     */
     public static String hash(String input) {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
@@ -121,6 +149,12 @@ public class DatabaseManager {
         }
     }
 
+    /**
+     * Loads all users from the database, including their accounts for BankClients.
+     *
+     * @return a map of card numbers to User objects
+     * @throws SQLException if a database error occurs
+     */
     public Map<String, User> loadUsers() throws SQLException {
         Map<String, User> map = new HashMap<>();
         Statement s = conn.createStatement();
@@ -146,6 +180,7 @@ public class DatabaseManager {
         return map;
     }
 
+    /** Loads all accounts belonging to the given BankClient. */
     private void loadAccounts(BankClient client) throws SQLException {
         PreparedStatement ps = conn.prepareStatement(
                 "SELECT * FROM accounts WHERE card_number = ?");
@@ -160,6 +195,14 @@ public class DatabaseManager {
         }
     }
 
+    /**
+     * Verifies a PIN against the stored hash for the given card number.
+     *
+     * @param cardNumber the card number to check
+     * @param pin        the plaintext PIN to verify
+     * @return true if the PIN matches
+     * @throws SQLException if a database error occurs
+     */
     public boolean verifyPin(String cardNumber, String pin) throws SQLException {
         PreparedStatement ps = conn.prepareStatement(
                 "SELECT pin_hash FROM users WHERE card_number = ?");
@@ -171,6 +214,12 @@ public class DatabaseManager {
         return false;
     }
 
+    /**
+     * Persists the locked status and failed attempt count for a user.
+     *
+     * @param user the user whose state to persist
+     * @throws SQLException if a database error occurs
+     */
     public void updateUserState(User user) throws SQLException {
         PreparedStatement ps = conn.prepareStatement(
                 "UPDATE users SET locked=?, failed_attempts=? WHERE card_number=?");
@@ -180,6 +229,12 @@ public class DatabaseManager {
         ps.executeUpdate();
     }
 
+    /**
+     * Persists the balance for an account.
+     *
+     * @param account the account whose balance to persist
+     * @throws SQLException if a database error occurs
+     */
     public void updateAccountBalance(Account account) throws SQLException {
         PreparedStatement ps = conn.prepareStatement(
                 "UPDATE accounts SET balance=? WHERE account_number=?");
@@ -188,6 +243,13 @@ public class DatabaseManager {
         ps.executeUpdate();
     }
 
+    /**
+     * Inserts or replaces an exchange rate for a currency pair.
+     *
+     * @param pair the currency pair key (e.g., "CAD:USD")
+     * @param rate the exchange rate
+     * @throws SQLException if a database error occurs
+     */
     public void updateExchangeRate(String pair, double rate) throws SQLException {
         PreparedStatement ps = conn.prepareStatement(
                 "INSERT OR REPLACE INTO exchange_rates VALUES (?,?)");
@@ -196,6 +258,12 @@ public class DatabaseManager {
         ps.executeUpdate();
     }
 
+    /**
+     * Loads all exchange rates from the database.
+     *
+     * @return a map of currency pair keys to rates
+     * @throws SQLException if a database error occurs
+     */
     public Map<String, Double> loadExchangeRates() throws SQLException {
         Map<String, Double> rates = new HashMap<>();
         Statement s = conn.createStatement();
@@ -206,6 +274,12 @@ public class DatabaseManager {
         return rates;
     }
 
+    /**
+     * Saves a transaction record to the database.
+     *
+     * @param r the transaction record to save
+     * @throws SQLException if a database error occurs
+     */
     public void saveTransaction(TransactionRecord r) throws SQLException {
         PreparedStatement ps = conn.prepareStatement(
                 "INSERT INTO transactions (card_number, record, created_at) VALUES (?,?,?)");
@@ -215,6 +289,13 @@ public class DatabaseManager {
         ps.executeUpdate();
     }
 
+    /**
+     * Loads all transaction records for a given card number.
+     *
+     * @param cardNumber the card number to load transactions for
+     * @return a list of transaction records, ordered by insertion
+     * @throws SQLException if a database error occurs
+     */
     public List<TransactionRecord> loadTransactions(String cardNumber) throws SQLException {
         List<TransactionRecord> list = new ArrayList<>();
         PreparedStatement ps = conn.prepareStatement(
@@ -227,6 +308,14 @@ public class DatabaseManager {
         return list;
     }
 
+    /**
+     * Calculates the total amount for a given transaction type today for a user.
+     *
+     * @param cardNumber the card number to query
+     * @param type       the transaction type (e.g., "withdraw")
+     * @return the total amount for that type today
+     * @throws SQLException if a database error occurs
+     */
     public double getDailyTotal(String cardNumber, String type) throws SQLException {
         double total = 0;
         String today = java.time.LocalDate.now().toString();
