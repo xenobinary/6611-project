@@ -4,6 +4,8 @@ testbin/
 *.class
 *.puml
 
+*.log
+
 project_description.pdf
 ibank.db
 1.md

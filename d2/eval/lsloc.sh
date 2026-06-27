@@ -41,5 +41,3 @@ done < <(find . -type f -name "*.java.clean" -print0)
 # 5. PRINT TABLE FOOTER
 echo "-------------------------------------------------------------+--------------"
 printf "%-60s | %12d\n\n" "TOTAL" "$total_sloc"
-
-# (The trap command from step 1 will now automatically clean up the files as the script exits!)
