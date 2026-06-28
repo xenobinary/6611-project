@@ -275,6 +275,57 @@ public class DatabaseManager {
     }
 
     /**
+     * Persists an account balance update and its transaction record atomically.
+     * Both writes commit or roll back together.
+     *
+     * @param account the account whose balance to persist
+     * @param record  the transaction record to persist
+     * @throws SQLException if any database operation fails (triggers rollback)
+     */
+    public void persistTransaction(Account account, TransactionRecord record) throws SQLException {
+        boolean autoCommit = true;
+        try {
+            autoCommit = conn.getAutoCommit();
+            conn.setAutoCommit(false);
+            updateAccountBalance(account);
+            saveTransaction(record);
+            conn.commit();
+        } catch (SQLException e) {
+            conn.rollback();
+            throw e;
+        } finally {
+            conn.setAutoCommit(autoCommit);
+        }
+    }
+
+    /**
+     * Executes a fund transfer as an atomic database transaction.
+     * Deducts from the source account, credits the destination, and saves
+     * the transaction record — all committed or rolled back together.
+     *
+     * @param from   the source account (already mutated in-memory)
+     * @param to     the destination account (already mutated in-memory)
+     * @param record the transaction record to persist
+     * @throws SQLException if any database operation fails (triggers rollback)
+     */
+    public void transferFunds(Account from, Account to, TransactionRecord record) throws SQLException {
+        boolean autoCommit = true;
+        try {
+            autoCommit = conn.getAutoCommit();
+            conn.setAutoCommit(false);
+            updateAccountBalance(from);
+            updateAccountBalance(to);
+            saveTransaction(record);
+            conn.commit();
+        } catch (SQLException e) {
+            conn.rollback();
+            throw e;
+        } finally {
+            conn.setAutoCommit(autoCommit);
+        }
+    }
+
+    /**
      * Saves a transaction record to the database.
      *
      * @param r the transaction record to save

@@ -101,11 +101,15 @@ public class TransactionController {
         TransactionRecord r = new TransactionRecord(
                 "withdraw", amount, account.getCurrency(),
                 account.getAccountNumber(), null, 0, null, currentCardNumber);
+        try {
+            db.persistTransaction(account, r);
+        } catch (SQLException e) {
+            account.deposit(amount);
+            cashBox.refillTo(cashBox.getCurrentCash() + amount);
+            throw new InvalidAmountException("Withdrawal failed, please try again later",
+                    "error.withdrawFailed");
+        }
         transactionHistory.add(r);
-        try { 
-            db.updateAccountBalance(account);
-            db.saveTransaction(r); 
-        } catch (SQLException e) {}
         String status = cashBox.isLow() ? " " + cashLowLabel : "";
         return r.format(actionLabel, "", "", fromWord, toWord) + status;
     }
@@ -147,17 +151,21 @@ public class TransactionController {
         TransactionRecord r = new TransactionRecord(
                 "deposit", amount, account.getCurrency(),
                 account.getAccountNumber(), null, 0, null, currentCardNumber);
+        try {
+            db.persistTransaction(account, r);
+        } catch (SQLException e) {
+            account.withdraw(amount);
+            throw new InvalidAmountException("Deposit failed, please try again later",
+                    "error.depositFailed");
+        }
         transactionHistory.add(r);
-        try { 
-            db.updateAccountBalance(account);
-            db.saveTransaction(r); 
-        } catch (SQLException e) {}
         return r.format("", actionLabel, "", fromWord, toWord);
     }
 
     /**
      * Performs a transfer between two accounts, with automatic currency conversion
-     * if the accounts use different currencies.
+     * if the accounts use different currencies. Both in-memory state and database
+     * changes are performed atomically — on DB failure, in-memory state is reverted.
      *
      * @param from        the source account
      * @param to          the destination account
@@ -195,12 +203,15 @@ public class TransactionController {
                 "transfer", amount, from.getCurrency(),
                 from.getAccountNumber(), to.getAccountNumber(),
                 convertedAmount, to.getCurrency(), currentCardNumber);
+        try {
+            db.transferFunds(from, to, r);
+        } catch (SQLException e) {
+            from.deposit(amount);
+            to.withdraw(convertedAmount);
+            throw new InvalidAmountException("Transfer failed, please try again later",
+                    "error.transferFailed");
+        }
         transactionHistory.add(r);
-        try { 
-            db.updateAccountBalance(from);
-            db.updateAccountBalance(to);
-            db.saveTransaction(r); 
-        } catch (SQLException e) {}
         return r.format("", "", actionLabel, fromWord, toWord);
     }
 
