@@ -89,36 +89,21 @@ d2/src/
 The iBank application follows the **Model-View-Controller (MVC)** pattern with a **Singleton-based service layer** for shared state. The architecture uses **Java Swing** for the UI and **SQLite** via JDBC for persistence.
 
 ```
-┌────────────────────────────────────────┐
-│              MainFrame (View+Router)    │
-│  ┌──────────┐  ┌──────────────┐        │
-│  │ SideBtns │  │ Center Panel │        │
-│  │ (L/R)    │  │ (CardLayout) │        │
-│  └──────────┘  └──────────────┘        │
-│  ┌──────────────────────────────┐      │
-│  │       Numpad (Keypad)        │      │
-│  └──────────────────────────────┘      │
-└────────────┬───────────────────────────┘
-             │
-    ┌────────┴────────┐
-    │   Controllers   │
-    │  AuthCtrl       │
-    │  TxnCtrl        │
-    │  I18nCtrl       │
-    └────────┬────────┘
-             │
-    ┌────────┴────────┐
-    │     Models      │
-    │  User/Account   │
-    │  CashBox        │
-    │  ExchangeRate   │
-    │  Database       │
-    └────────┬────────┘
-             │
-    ┌────────┴────────┐
-    │   SQLite DB     │
-    │  (~/.ibank.db)  │
-    └─────────────────┘
+@startuml
+!theme plain
+
+rectangle "MainFrame (View + Router)\n════════════════════\n• Side Buttons (L/R)\n• Center Panel (CardLayout)\n• Numpad (Keypad)" as mf #LightBlue
+
+rectangle "Controllers\n══════════\n• AuthCtrl\n• TxnCtrl\n• I18nCtrl" as ctrl #LightGreen
+
+rectangle "Models\n══════\n• User / Account\n• CashBox\n• ExchangeRate\n• Database" as models #LightYellow
+
+database "SQLite DB\n(~/.ibank.db)" as sqlite #LightGray
+
+mf -down-> ctrl : uses
+ctrl -down-> models : operates on
+models -down-> sqlite : persists via JDBC
+@enduml
 ```
 
 ---

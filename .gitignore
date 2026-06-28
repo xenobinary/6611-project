@@ -5,6 +5,7 @@ testbin/
 *.puml
 
 *.log
+*.html
 
 project_description.pdf
 ibank.db
