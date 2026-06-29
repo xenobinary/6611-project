@@ -191,6 +191,6 @@ The document includes:
 
 ## Authors
 
-SOEN 6611 Project Team
+SOEN 6611 Project Team C
 
-Course: **SOEN 6611 – Software Engineering**
+Course: **SOEN 6611 – Software Measurement**
