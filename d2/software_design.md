@@ -83,6 +83,201 @@ d2/src/
 
 ---
 
+### 1.3 Deployment Diagram
+
+```plantuml
+@startuml
+!theme plain
+
+node "ABM Terminal" {
+
+rectangle "View Layer (Swing)\n══════════════════\n• MainFrame\n• BaseViewPanel\n• LoginPanel\n• ClientDashboardPanel\n• AdminDashboardPanel\n• TechnicianPanel\n• NumpadPanel\n• LanguageSelectorPanel" as view #LightBlue
+
+rectangle "Controller Layer\n════════════════════\n• AuthenticationController\n• TransactionController\n• I18nController" as ctrl #LightGreen
+
+rectangle "Model Layer\n═════════\n• User / Account\n• CashBox (Singleton)\n• ExchangeRateManager (Singleton)\n• TransactionRecord\n• DatabaseManager (Singleton)" as model #LightYellow
+
+rectangle "Exceptions\n════════\n• AccountLockedException\n• InsufficientFundException\n• InvalidAmountException" as exc #LightPink
+
+database "ibank.db\n(SQLite)" as db #LightGray
+
+folder "resources/\n.properties" as res #LightCoral
+
+}
+
+actor "User" as user
+
+user --> view : interacts via GUI
+view -down-> ctrl : delegates events
+ctrl -down-> model : operates on
+model -down-> db : JDBC
+model -down-> res : reads i18n
+ctrl -right-> exc : throws
+exc -up-> view : caught / displayed
+@enduml
+```
+
+The entire application runs as a monolithic desktop process on a single terminal. The three MVC layers — Swing UI, Controllers, and Models — execute within the same JVM. Persistence uses an embedded SQLite database file (`ibank.db`) accessed via JDBC through the `DatabaseManager` singleton. Internationalized strings are loaded at startup from `.properties` files on the local filesystem, with English as the default fallback.
+
+---
+
+### 1.4 Security & Error Handling
+
+Security is enforced at every layer through a defense-in-depth strategy — authentication, business rule enforcement, database integrity, and exception-driven state recovery.
+
+#### 1.4.1 Authentication & Authorization
+
+| Mechanism | Implementation |
+|-----------|---------------|
+| **PIN verification** | SHA-256 hashed PINs stored in SQLite; `DatabaseManager.verifyPin()` compares hashes in constant time (single DB lookup). |
+| **Account lockout** | `User.authenticate()` increments a counter on each failure; after 3 consecutive failures the account is locked. |
+| **Role opt-out** | `canBeLocked()` — returns `false` for `SystemAdmin` and `Technician`, so they can never be locked out. |
+| **Role-based routing** | After successful login, `LoginPanel` reads `getRole()` and navigates to the correct dashboard (client/admin/technician). |
+| **Session isolation** | `TransactionController.setCurrentUser()` loads only that user's transaction history at login; `logout()` clears the session and transaction data. |
+
+#### 1.4.2 Business Rule Enforcement
+
+All transaction rules are enforced in `TransactionController` **before** any state mutation occurs:
+
+| Rule | Exception |
+|------|-----------|
+| Amount must be a multiple of 20 | `InvalidAmountException` (`error.multipleOf20`) |
+| Withdrawal ≤ $500 per transaction | `InvalidAmountException` (`error.maxPerTxnW`) |
+| Withdrawal ≤ $2,000 per day | `InvalidAmountException` (`error.maxPerDayW`) |
+| Deposit ≤ $2,000 per transaction | `InvalidAmountException` (`error.maxPerTxnD`) |
+| Deposit ≤ $5,000 per day | `InvalidAmountException` (`error.maxPerDayD`) |
+| Withdraw/deposit only on CAD accounts | `InvalidAmountException` (`error.cadOnly`) |
+| Sufficient account balance | `InsufficientFundException` |
+| Sufficient physical cash in ABM | `InvalidAmountException` (`error.cashInsufficient`) |
+| Source ≠ destination (transfer) | `InvalidAmountException` (`error.sameAccount`) |
+
+#### 1.4.3 Database Integrity
+
+| Mechanism | Implementation |
+|-----------|---------------|
+| **Referential integrity** | `CREATE TABLE` statements use `FOREIGN KEY(accounts.card_number) REFERENCES users(card_number)`. Foreign keys are enabled via `PRAGMA foreign_keys = ON`. |
+| **Atomic transactions** | `DatabaseManager.persistTransaction()` and `transferFunds()` wrap multi-statement writes (balance update + transaction record) in `conn.setAutoCommit(false)` / `commit()` / `rollback()` blocks. A partial write is impossible. |
+| **Single source of truth** | The database is the authoritative store. In-memory objects are derived from it at startup and must be persisted back on every mutation. |
+| **Input hashing** | PINs are never stored in plaintext; `DatabaseManager.hash()` uses SHA-256 before comparison or storage. |
+
+#### 1.4.4 Exception-Driven State Recovery
+
+Exceptions serve double duty: they report errors to the user **and** prevent in-memory state from drifting out of sync with the database.
+
+When a database write fails (e.g., disk full, SQLite lock):
+
+```
+1. conn.rollback()           — DB state restored to pre-transaction
+2. account.deposit(amount)   — in-memory balance reverted
+3. throw InvalidAmountException — user sees "Withdrawal failed, try again"
+4. transactionHistory.add()  — skipped (no phantom record)
+```
+
+Without this recovery, the in-memory `Account` balance would be debited but never persisted, creating a silent mismatch. The framework (`ClientDashboardPanel`) already catches `InvalidAmountException` and `InsufficientFundException` and displays a localized error to the user without crashing.
+
+| Operation | DB failure → | In-memory reverted by |
+|-----------|-------------|----------------------|
+| Withdraw | `cashBox.dispense()` + `account.withdraw()` already applied | `account.deposit(amount)` + `cashBox.refillTo(current + amount)` |
+| Deposit | `account.deposit()` already applied | `account.withdraw(amount)` |
+| Transfer | `from.withdraw()` + `to.deposit()` already applied | `from.deposit(amount)` + `to.withdraw(convertedAmount)` |
+
+#### 1.4.5 Input Validation
+
+| Layer | Validation |
+|-------|-----------|
+| **Login** | Card must be selected from dropdown; PIN buffer capped at 6 digits. |
+| **Numpad** | Amount buffer enforces decimal precision (2 digits for currency, 4 for exchange rates); invalid `parseDouble` caught by `NumberFormatException`. |
+| **View routing** | `navigateTo()` only accepts known view names (`login`/`client`/`admin`/`tech`/`language`/`client_restore`); unknown names are ignored by the `switch` default (no-op). |
+| **I18n** | Missing i18n keys fall back to the hardcoded default string; missing properties files fall back to English. |
+
+---
+
+### 1.5 Usability
+
+The user interface is designed for a physical ATM kiosk — no mouse required, large readable fonts, and consistent navigation patterns across every screen.
+
+#### 1.5.1 Internationalization (i18n)
+
+Three languages supported out of the box, switchable at any time:
+
+| Code | Language | Properties File |
+|------|----------|----------------|
+| `en` | English | `messages_en.properties` |
+| `fr` | French | `messages_fr.properties` |
+| `zh` | Chinese | `messages_zh.properties` |
+
+The `I18nController` singleton loads locale-specific strings at startup. `I18nListener` notifies every registered UI component on language change, so labels update immediately without restarting. Keys missing from a locale file fall back to English — the application never shows raw keys or blank text.
+
+Adding a new language requires only a new `.properties` file; no code changes.
+
+#### 1.5.2 Consistent Layout
+
+All screens share the same structure via `BaseViewPanel`:
+
+```
+┌──────────┬──────────────────────┬──────────┐
+│  Left    │  Title               │  Right   │
+│  Side    │  ─────────────       │  Side    │
+│  Buttons │  Content Area        │  Buttons │
+│  (5)     │  (table / form)      │  (5)     │
+│          │  ─────────────       │          │
+│          │  Message             │          │
+├──────────┴──────────────────────┴──────────┤
+│              Numpad (4×4 grid)             │
+└────────────────────────────────────────────┘
+```
+
+Side buttons change per screen (Withdraw/Deposit/Transfer on client, Refill on technician) but their position and styling are identical. Users never need to re-learn the interface when switching functions.
+
+#### 1.5.3 Dual-Input Navigation
+
+Every list and menu supports two input methods simultaneously:
+
+| Method | Use Case | Implementation |
+|--------|----------|---------------|
+| **Number keys** | Quick selection | Pressing `1` on the numpad jumps to the 1st row |
+| **Arrow buttons** | Browsing | Up/down side buttons move the highlighted row one step |
+
+Users who prefer direct entry can skip scrolling entirely.
+
+#### 1.5.4 Guided Transaction Flow
+
+Every transaction follows a predictable sub-state sequence with OK/Cancel at each step:
+
+```
+Welcome → Account Select → Amount Entry → Confirm → Result (auto-return)
+                ↑  Cancel  ←  Cancel  ←  Cancel
+```
+
+Cancel always returns to the previous step or the welcome screen. No action is committed without explicit confirmation. After completion, the screen auto-returns to the welcome menu after a brief delay (1.5–2.5 seconds).
+
+#### 1.5.5 Visual Feedback
+
+| Element | Feedback |
+|---------|----------|
+| **PIN entry** | Digits masked as asterisks; remaining positions shown as underscores |
+| **Active selection** | Orange highlight on the selected transaction action (Withdraw/Deposit/Transfer/Balance/History) |
+| **List cursor** | `>` prefix marks the currently selected list row |
+| **Success** | Green text (`<font color=green>`) with auto-dismiss timer |
+| **Error** | Red text (`<font color=red>`) on the message line below the content area |
+| **Low cash warning** | Appended to withdrawal result text when `CashBox.isLow()` is true |
+
+#### 1.5.6 Non-Modal Language Switching
+
+Users can change the display language from any screen (login, client dashboard, admin panel, technician panel) via a dedicated side button. The `LanguageSelectorPanel` preserves the caller's exact state — which account was selected, which operation was in progress — so they return to the same step after the switch. Client dashboard state is fully restored via `restoreState()`.
+
+#### 1.5.7 Input Assistance
+
+| Feature | Detail |
+|---------|--------|
+| **Card dropdown** | Users select from a pre-populated list; no manual card number entry |
+| **Amount formatting** | Currency amounts always display 2 decimal places (`%.2f`); exchange rates display 4 (`%.4f`) |
+| **Decimal point guard** | Only one dot allowed per amount entry; extra dots are silently ignored |
+| **Leading zero normalization** | Entries like `020` display as `20`; the buffer auto-removes leading zeros |
+| **Trailing decimal cleanup** | Deleting the dot resets `dotEntered` so a new dot can be entered later |
+
+---
+
 ## 2. Actors & Use Cases
 ### 2.1 Architecture Overview
 

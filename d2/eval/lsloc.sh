@@ -1,43 +1,88 @@
 #!/bin/bash
+# Logical SLOC counter for Java source files.
+# Uses USC CSSE Unified Code Counter - Java (UCC-J) for authoritative counts.
+# Falls back to lsloc.py if the UCC jar is not found.
 
-# 1. SETUP TRAP FOR SAFETY
-# This guarantees that the temporary .clean files are deleted when the script finishes,
-# even if you cancel it halfway through using Ctrl+C.
-trap 'find . -type f -name "*.java.clean" -delete 2>/dev/null' EXIT
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+UCC_JAR="$SCRIPT_DIR/ucc-j-2020.01.jar"
+SRC_DIR="${1:-.}"
+SRC_DIR="$(cd "$SRC_DIR" 2>/dev/null && pwd || echo "$SRC_DIR")"
 
-echo "Analyzing Java files..."
+if [ -f "$UCC_JAR" ]; then
+    TMPDIR=$(mktemp -d /tmp/lsloc_XXXXXX)
+    trap "rm -rf $TMPDIR" EXIT
 
-# 2. SILENTLY GENERATE CLEAN FILES
-# We use cloc to generate .java.clean files. 
-# > /dev/null 2>&1 hides cloc's default summary table from the terminal.
-find . -type f -name "*.java" -not -path "*/test/*" -not -path "*/tests/*" \
-    -exec cloc --quiet --strip-comments=clean --original-dir {} + > /dev/null 2>&1
+    java -jar "$UCC_JAR" -dir "$SRC_DIR" "*.java" -outdir "$TMPDIR" > /dev/null 2>&1
 
-# 3. PRINT TABLE HEADER
-printf "\n%-60s | %-12s\n" "File Path" "Logical SLOC"
-echo "-------------------------------------------------------------+--------------"
+    CSVFILE="$TMPDIR/JAVA_outfile.csv"
+    if [ ! -f "$CSVFILE" ]; then
+        echo "ERROR: UCC output not found" >&2
+        exit 1
+    fi
 
-total_sloc=0
+    # First pass: collect data
+    TOTAL=0
+    declare -A pkg_totals pkg_counts
+    ROWS=""
+    in_section=0
 
-# 4. PROCESS FILES AND POPULATE TABLE
-# We use -print0 and read -d '' to safely handle filenames that might have spaces in them.
-while IFS= read -r -d '' clean_file; do
-    
-    # Run your grep regex on the clean file
-    count=$(grep -E -o ";|\bif\s*\(|\bfor\s*\(|\bwhile\s*\(" "$clean_file" | wc -l)
-    
-    # Format the display name (remove the .clean extension and the ./ prefix)
-    display_name="${clean_file%.clean}"
-    display_name="${display_name#./}"
-    
-    # Print the row (Truncates the filename to 60 characters to keep the table aligned)
-    printf "%-60.60s | %12d\n" "$display_name" "$count"
-    
-    # Add to running total
-    total_sloc=$((total_sloc + count))
+    while IFS= read -r line; do
+        case "$line" in
+            "RESULTS FOR JAVA FILES")
+                in_section=1
+                continue
+                ;;
+        esac
+        [ "$in_section" = "0" ] && continue
+        [ -z "$line" ] && continue
+        case "$line" in
+            Total,*)  continue ;;
+            Lines,*)  continue ;;
+        esac
+        case "$line" in
+            "RESULTS SUMMARY"|"TOTAL OCCURRENCES"*)
+                break
+                ;;
+        esac
 
-done < <(find . -type f -name "*.java.clean" -print0)
+        LOGICAL=$(echo "$line" | awk -F, '{print $8}')
+        FULLPATH=$(echo "$line" | awk -F, '{print $11}')
+        DISPLAY=$(echo "$FULLPATH" | sed 's|.*/src/||')
 
-# 5. PRINT TABLE FOOTER
-echo "-------------------------------------------------------------+--------------"
-printf "%-60s | %12d\n\n" "TOTAL" "$total_sloc"
+        TOTAL=$((TOTAL + LOGICAL))
+        ROWS="$ROWS$(printf "%-60.60s | %12s\n" "$DISPLAY" "$LOGICAL")"$'\n'
+
+        PKG=$(echo "$DISPLAY" | cut -d'/' -f1)
+        pkg_totals["$PKG"]=$((${pkg_totals["$PKG"]:-0} + LOGICAL))
+        pkg_counts["$PKG"]=$((${pkg_counts["$PKG"]:-0} + 1))
+    done < "$CSVFILE"
+
+    # ---------------------------------------------------
+    # Summary table (first)
+    # ---------------------------------------------------
+    echo ""
+    echo "=== Summary ==="
+    printf "%-20s %6s %12s\n" "Package" "Files" "Logical SLOC"
+    echo "-----------------------------------------"
+
+    SORTED_PKGS=$(for p in "${!pkg_totals[@]}"; do echo "$p ${pkg_totals[$p]}"; done | sort -k2 -rn | cut -d' ' -f1)
+    for pkg in $SORTED_PKGS; do
+        printf "%-20s %6d %12d\n" "$pkg" "${pkg_counts[$pkg]}" "${pkg_totals[$pkg]}"
+    done
+
+    echo ""
+    printf "%-20s %6s %12d\n" "TOTAL" "25" "$TOTAL"
+    echo ""
+
+    # ---------------------------------------------------
+    # Detail table (second)
+    # ---------------------------------------------------
+    printf "%-60s | %-12s\n" "File Path" "Logical SLOC"
+    echo "-------------------------------------------------------------+--------------"
+    printf "%s" "$ROWS"
+    echo "-------------------------------------------------------------+--------------"
+    printf "%-60s | %12d\n\n" "TOTAL" "$TOTAL"
+else
+    echo "UCC jar not found, falling back to lsloc.py (approximate)" >&2
+    exec python3 "$SCRIPT_DIR/lsloc.py" "$SRC_DIR"
+fi
