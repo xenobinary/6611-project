@@ -12,6 +12,7 @@ import java.util.Properties;
  * and notifying registered listeners of language changes.
  */
 public class I18nController {
+
     /** The singleton instance. */
     private static I18nController instance;
     /** The currently loaded message properties. */
@@ -22,6 +23,7 @@ public class I18nController {
     private List<I18nListener> listeners;
 
     /** Private constructor; initializes with English as the default language. */
+
     private I18nController() {
         listeners = new ArrayList<>();
         currentLanguage = "en";
@@ -34,6 +36,7 @@ public class I18nController {
      *
      * @return the instance
      */
+
     public static I18nController getInstance() {
         if (instance == null) {
             instance = new I18nController();
@@ -42,24 +45,33 @@ public class I18nController {
     }
 
     /** Loads the properties file for the given language code. */
+
     private void loadLanguage(String lang) {
         messages.clear();
         String fileName = "resources/messages_" + lang + ".properties";
+
         try {
-            InputStream is = getClass().getClassLoader()
-                    .getResourceAsStream(fileName);
+            InputStream is = getClass()
+                .getClassLoader()
+                .getResourceAsStream(fileName);
+
             if (is == null) {
                 is = new FileInputStream("d2/src/" + fileName);
             }
+
             messages.load(new InputStreamReader(is, StandardCharsets.UTF_8));
             is.close();
         } catch (Exception e) {
             try {
                 InputStream is = new FileInputStream(fileName);
-                messages.load(new InputStreamReader(is, StandardCharsets.UTF_8));
+                messages.load(
+                    new InputStreamReader(is, StandardCharsets.UTF_8)
+                );
                 is.close();
             } catch (Exception e2) {
-                System.err.println("Failed to load language: " + lang + " - " + e.getMessage());
+                System.err.println(
+                    "Failed to load language: " + lang + " - " + e.getMessage()
+                );
             }
         }
     }
@@ -70,8 +82,10 @@ public class I18nController {
      * @param key the i18n key
      * @return the localized message, or "!" + key + "!" if not found
      */
+
     public String get(String key) {
         String value = messages.getProperty(key);
+
         return value != null ? value : "!" + key + "!";
     }
 
@@ -82,8 +96,10 @@ public class I18nController {
      * @param defaultValue the fallback value
      * @return the localized message, or the defaultValue if not found
      */
+
     public String get(String key, String defaultValue) {
         String value = messages.getProperty(key);
+
         return value != null ? value : defaultValue;
     }
 
@@ -93,6 +109,7 @@ public class I18nController {
      *
      * @param lang the language code to switch to
      */
+
     public void setLanguage(String lang) {
         if (!lang.equals(currentLanguage)) {
             currentLanguage = lang;
@@ -106,6 +123,7 @@ public class I18nController {
      *
      * @return the language code (e.g., "en")
      */
+
     public String getCurrentLanguage() {
         return currentLanguage;
     }
@@ -115,6 +133,7 @@ public class I18nController {
      *
      * @param listener the listener to add
      */
+
     public void addListener(I18nListener listener) {
         listeners.add(listener);
     }
@@ -124,11 +143,13 @@ public class I18nController {
      *
      * @param listener the listener to remove
      */
+
     public void removeListener(I18nListener listener) {
         listeners.remove(listener);
     }
 
     /** Notifies all registered listeners of a language change. */
+
     private void notifyListeners() {
         for (I18nListener listener : listeners) {
             listener.onLanguageChanged(currentLanguage);
@@ -150,6 +171,7 @@ public class I18nController {
     /**
      * Resets the singleton instance (mainly for testing).
      */
+
     public static void resetInstance() {
         instance = null;
     }

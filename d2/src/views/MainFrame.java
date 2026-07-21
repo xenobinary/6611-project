@@ -20,7 +20,7 @@ public class MainFrame extends JFrame implements Router, I18nController.I18nList
     private CardLayout centerCards;
     /** The title label in the header bar. */
     private JLabel titleLabel;
-    
+
     /** The login view panel. */
     private LoginPanel loginPanel;
     /** The client dashboard view panel. */
@@ -31,7 +31,6 @@ public class MainFrame extends JFrame implements Router, I18nController.I18nList
     private TechnicianPanel techPanel;
     /** The language selector view panel. */
     private LanguageSelectorPanel languagePanel;
-
     /**
      * Constructs the main frame, initializes controllers, builds the UI,
      * and navigates to the login screen.
@@ -40,12 +39,14 @@ public class MainFrame extends JFrame implements Router, I18nController.I18nList
         auth = new AuthenticationController();
         txn = new TransactionController();
         i18n = I18nController.getInstance();
+
         i18n.addListener(this);
         buildUI();
         navigateTo("login");
     }
 
     /** Builds the complete UI: header bar + card-layout center + all panels. */
+
     private void buildUI() {
         setTitle("iBank ABM");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -55,16 +56,16 @@ public class MainFrame extends JFrame implements Router, I18nController.I18nList
 
         JPanel shell = new JPanel(new BorderLayout(0, 0));
         shell.add(header(), BorderLayout.NORTH);
-        
+
         centerCards = new CardLayout();
         centerPanel = new JPanel(centerCards);
-        
+
         loginPanel = new LoginPanel(this);
         clientPanel = new ClientDashboardPanel(this);
         adminPanel = new AdminDashboardPanel(this);
         techPanel = new TechnicianPanel(this);
         languagePanel = new LanguageSelectorPanel(this);
-        
+
         centerPanel.add(loginPanel, "login");
         centerPanel.add(clientPanel, "client");
         centerPanel.add(adminPanel, "admin");
@@ -76,14 +77,17 @@ public class MainFrame extends JFrame implements Router, I18nController.I18nList
     }
 
     /** Creates the top header bar with the application title. */
+
     private JPanel header() {
         JPanel p = new JPanel(new BorderLayout());
         p.setBackground(new Color(0, 51, 102));
         p.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+
         titleLabel = new JLabel("iBank ABM");
         titleLabel.setFont(new Font("SansSerif", Font.BOLD, 22));
         titleLabel.setForeground(Color.WHITE);
         p.add(titleLabel, BorderLayout.CENTER);
+
         return p;
     }
 
@@ -98,10 +102,12 @@ public class MainFrame extends JFrame implements Router, I18nController.I18nList
                 languagePanel.isPreLangHistory(),
                 languagePanel.isPreLangBalance()
             );
+
             return;
         }
-        
+
         centerCards.show(centerPanel, viewName);
+
         switch (viewName) {
             case "login": loginPanel.onShow(); break;
             case "client": clientPanel.onShow(); break;

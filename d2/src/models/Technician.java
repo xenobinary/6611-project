@@ -3,6 +3,7 @@
  * Technicians cannot be locked out after failed login attempts.
  */
 public class Technician extends User {
+
     /**
      * Constructs a new Technician.
      *
@@ -10,6 +11,7 @@ public class Technician extends User {
      * @param pin        the plaintext PIN
      * @param userName   the display name
      */
+
     public Technician(String cardNumber, String pin, String userName) {
         super(cardNumber, pin, userName);
     }

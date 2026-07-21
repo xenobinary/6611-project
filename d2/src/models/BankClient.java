@@ -6,6 +6,7 @@ import java.util.List;
  * across different currencies and can perform transactions (withdraw, deposit, transfer).
  */
 public class BankClient extends User {
+
     /** The list of accounts owned by this client. */
     private List<Account> accounts;
 
@@ -16,6 +17,7 @@ public class BankClient extends User {
      * @param pin        the plaintext PIN
      * @param userName   the display name
      */
+
     public BankClient(String cardNumber, String pin, String userName) {
         super(cardNumber, pin, userName);
         this.accounts = new ArrayList<>();
@@ -26,6 +28,7 @@ public class BankClient extends User {
      *
      * @param account the account to add
      */
+
     public void addAccount(Account account) {
         accounts.add(account);
     }
@@ -35,6 +38,7 @@ public class BankClient extends User {
      *
      * @return the list of accounts
      */
+
     public List<Account> getAccounts() {
         return accounts;
     }
@@ -45,6 +49,7 @@ public class BankClient extends User {
      * @param accountNumber the account number to search for
      * @return the matching Account, or null if not found
      */
+
     public Account findAccount(String accountNumber) {
         for (Account a : accounts) {
             if (a.getAccountNumber().equals(accountNumber)) {

@@ -69,9 +69,11 @@ public class NumpadPanel extends JPanel implements I18nController.I18nListener {
         dotBtn.setBackground(Color.WHITE);
         dotBtn.setFocusPainted(false);
         grid.add(dotBtn);
+
         numBtns[0] = numBtn("0", false); grid.add(numBtns[0]);
         delBtn = actionBtn(i18n.get("button.del", "DEL"), new Color(180, 180, 190), Color.BLACK);
         grid.add(delBtn);
+
         JLabel blank = new JLabel();
         blank.setOpaque(true);
         blank.setBackground(new Color(220, 220, 225));
@@ -96,6 +98,7 @@ public class NumpadPanel extends JPanel implements I18nController.I18nListener {
         JButton b = new JButton(html);
         b.setBackground(Color.WHITE);
         b.setFocusPainted(false);
+
         return b;
     }
 
@@ -113,6 +116,7 @@ public class NumpadPanel extends JPanel implements I18nController.I18nListener {
         b.setBackground(bg);
         b.setForeground(fg);
         b.setFocusPainted(false);
+
         return b;
     }
 
@@ -153,26 +157,31 @@ public class NumpadPanel extends JPanel implements I18nController.I18nListener {
                 }
             });
         }
+
         dotBtn.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 for (NumpadListener l : listeners) l.onDot();
             }
         });
+
         clrBtn.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 for (NumpadListener l : listeners) l.onClear();
             }
         });
+
         delBtn.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 for (NumpadListener l : listeners) l.onDelete();
             }
         });
+
         okBtn.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 for (NumpadListener l : listeners) l.onOk();
             }
         });
+
         cancelBtn.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 for (NumpadListener l : listeners) l.onCancel();

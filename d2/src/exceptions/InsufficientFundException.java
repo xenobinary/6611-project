@@ -6,7 +6,6 @@ public class InsufficientFundException extends Exception {
     private double available;
     /** The amount that was requested. */
     private double requested;
-
     /**
      * Constructs an InsufficientFundException.
      *
@@ -14,6 +13,7 @@ public class InsufficientFundException extends Exception {
      * @param available the available balance
      * @param requested the requested amount
      */
+
     public InsufficientFundException(String message, double available, double requested) {
         super(message);
         this.available = available;
@@ -25,6 +25,7 @@ public class InsufficientFundException extends Exception {
      *
      * @return the available balance
      */
+
     public double getAvailable() {
         return available;
     }
@@ -34,7 +35,9 @@ public class InsufficientFundException extends Exception {
      *
      * @return the requested amount
      */
+
     public double getRequested() {
         return requested;
     }
+
 }

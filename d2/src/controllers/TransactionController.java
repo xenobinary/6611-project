@@ -9,13 +9,13 @@ import java.util.List;
  * and maintains an in-memory transaction history for the current session.
  */
 public class TransactionController {
+
     /** In-memory list of transaction records for the current user session. */
     private List<TransactionRecord> transactionHistory;
     /** Reference to the database manager for persistence. */
     private DatabaseManager db;
     /** The card number of the currently authenticated user. */
     private String currentCardNumber;
-
     /** Maximum withdrawal amount per transaction. */
     private static final double MAX_WITHDRAW_PER_TXN = 500.0;
     /** Maximum total withdrawal amount per day. */
@@ -28,6 +28,7 @@ public class TransactionController {
     /**
      * Constructs a new TransactionController with an empty history.
      */
+
     public TransactionController() {
         db = DatabaseManager.getInstance();
         transactionHistory = new ArrayList<>();
@@ -38,9 +39,11 @@ public class TransactionController {
      *
      * @param cardNumber the card number of the authenticated user
      */
+
     public void setCurrentUser(String cardNumber) {
         this.currentCardNumber = cardNumber;
         transactionHistory.clear();
+
         try {
             transactionHistory = db.loadTransactions(cardNumber);
         } catch (SQLException e) {
@@ -63,54 +66,91 @@ public class TransactionController {
      * @throws InsufficientFundException if the account has insufficient funds
      * @throws InvalidAmountException    if the amount violates business rules
      */
-    public String withdraw(Account account, double amount,
-            String actionLabel, String cashLowLabel,
-            String fromWord, String toWord)
-            throws InsufficientFundException, InvalidAmountException {
+    public String withdraw(
+        Account account,
+        double amount,
+        String actionLabel,
+        String cashLowLabel,
+        String fromWord,
+        String toWord
+    ) throws InsufficientFundException, InvalidAmountException {
         if (amount <= 0 || amount % 20 != 0) {
-            throw new InvalidAmountException("Amount must be a multiple of 20",
-                    "error.multipleOf20");
+            throw new InvalidAmountException(
+                "Amount must be a multiple of 20",
+                "error.multipleOf20"
+            );
         }
         if (amount > MAX_WITHDRAW_PER_TXN) {
-            throw new InvalidAmountException("Maximum withdrawal per transaction: $500",
-                    "error.maxPerTxnW");
+            throw new InvalidAmountException(
+                "Maximum withdrawal per transaction: $500",
+                "error.maxPerTxnW"
+            );
         }
+
         double dailyW = 0;
-        try { dailyW = db.getDailyTotal(currentCardNumber, "withdraw"); } catch (SQLException e) {}
+
+        try {
+            dailyW = db.getDailyTotal(currentCardNumber, "withdraw");
+        } catch (SQLException e) {}
+
         if (dailyW + amount > MAX_WITHDRAW_PER_DAY) {
-            throw new InvalidAmountException("Daily withdrawal limit reached: $2,000",
-                    "error.maxPerDayW");
+            throw new InvalidAmountException(
+                "Daily withdrawal limit reached: $2,000",
+                "error.maxPerDayW"
+            );
         }
         if (!"CAD".equals(account.getCurrency())) {
-            throw new InvalidAmountException("Only CAD accounts can be withdrawn",
-                    "error.cadOnly");
+            throw new InvalidAmountException(
+                "Only CAD accounts can be withdrawn",
+                "error.cadOnly"
+            );
         }
         if (amount > account.getBalance()) {
-            throw new InsufficientFundException("Insufficient funds",
-                    account.getBalance(), amount);
+            throw new InsufficientFundException(
+                "Insufficient funds",
+                account.getBalance(),
+                amount
+            );
         }
+
         CashBox cashBox = CashBox.getInstance();
+
         if (!cashBox.hasSufficientCash(amount)) {
             throw new InvalidAmountException(
-                    "Cash box has insufficient funds. Available: "
-                            + String.format("%.2f", cashBox.getCurrentCash()),
-                    "error.cashInsufficient");
+                "Cash box has insufficient funds. Available: " +
+                    String.format("%.2f", cashBox.getCurrentCash()),
+                "error.cashInsufficient"
+            );
         }
+
         account.withdraw(amount);
         cashBox.dispense(amount);
         TransactionRecord r = new TransactionRecord(
-                "withdraw", amount, account.getCurrency(),
-                account.getAccountNumber(), null, 0, null, currentCardNumber);
+            "withdraw",
+            amount,
+            account.getCurrency(),
+            account.getAccountNumber(),
+            null,
+            0,
+            null,
+            currentCardNumber
+        );
+
         try {
             db.persistTransaction(account, r);
         } catch (SQLException e) {
             account.deposit(amount);
             cashBox.refillTo(cashBox.getCurrentCash() + amount);
-            throw new InvalidAmountException("Withdrawal failed, please try again later",
-                    "error.withdrawFailed");
+
+            throw new InvalidAmountException(
+                "Withdrawal failed, please try again later",
+                "error.withdrawFailed"
+            );
         }
+
         transactionHistory.add(r);
         String status = cashBox.isLow() ? " " + cashLowLabel : "";
+
         return r.format(actionLabel, "", "", fromWord, toWord) + status;
     }
 
@@ -126,39 +166,69 @@ public class TransactionController {
      * @return a formatted result string
      * @throws InvalidAmountException if the amount violates business rules
      */
-    public String deposit(Account account, double amount, String actionLabel,
-            String fromWord, String toWord)
-            throws InvalidAmountException {
+    public String deposit(
+        Account account,
+        double amount,
+        String actionLabel,
+        String fromWord,
+        String toWord
+    ) throws InvalidAmountException {
         if (amount <= 0 || amount % 20 != 0) {
-            throw new InvalidAmountException("Amount must be a multiple of 20",
-                    "error.multipleOf20");
+            throw new InvalidAmountException(
+                "Amount must be a multiple of 20",
+                "error.multipleOf20"
+            );
         }
         if (amount > MAX_DEPOSIT_PER_TXN) {
-            throw new InvalidAmountException("Maximum deposit per transaction: $2,000",
-                    "error.maxPerTxnD");
+            throw new InvalidAmountException(
+                "Maximum deposit per transaction: $2,000",
+                "error.maxPerTxnD"
+            );
         }
+
         double dailyD = 0;
-        try { dailyD = db.getDailyTotal(currentCardNumber, "deposit"); } catch (SQLException e) {}
+
+        try {
+            dailyD = db.getDailyTotal(currentCardNumber, "deposit");
+        } catch (SQLException e) {}
+
         if (dailyD + amount > MAX_DEPOSIT_PER_DAY) {
-            throw new InvalidAmountException("Daily deposit limit reached: $5,000",
-                    "error.maxPerDayD");
+            throw new InvalidAmountException(
+                "Daily deposit limit reached: $5,000",
+                "error.maxPerDayD"
+            );
         }
         if (!"CAD".equals(account.getCurrency())) {
-            throw new InvalidAmountException("Only CAD accounts can be deposited",
-                    "error.cadOnly");
+            throw new InvalidAmountException(
+                "Only CAD accounts can be deposited",
+                "error.cadOnly"
+            );
         }
+
         account.deposit(amount);
         TransactionRecord r = new TransactionRecord(
-                "deposit", amount, account.getCurrency(),
-                account.getAccountNumber(), null, 0, null, currentCardNumber);
+            "deposit",
+            amount,
+            account.getCurrency(),
+            account.getAccountNumber(),
+            null,
+            0,
+            null,
+            currentCardNumber
+        );
+
         try {
             db.persistTransaction(account, r);
         } catch (SQLException e) {
             account.withdraw(amount);
-            throw new InvalidAmountException("Deposit failed, please try again later",
-                    "error.depositFailed");
+            throw new InvalidAmountException(
+                "Deposit failed, please try again later",
+                "error.depositFailed"
+            );
         }
+
         transactionHistory.add(r);
+
         return r.format("", actionLabel, "", fromWord, toWord);
     }
 
@@ -177,41 +247,72 @@ public class TransactionController {
      * @throws InsufficientFundException if the source account has insufficient funds
      * @throws InvalidAmountException    if the amount is invalid or source equals destination
      */
-    public String transfer(Account from, Account to, double amount, String actionLabel,
-            String fromWord, String toWord)
-            throws InsufficientFundException, InvalidAmountException {
+    public String transfer(
+        Account from,
+        Account to,
+        double amount,
+        String actionLabel,
+        String fromWord,
+        String toWord
+    ) throws InsufficientFundException, InvalidAmountException {
         if (amount <= 0) {
-            throw new InvalidAmountException("Amount must be positive",
-                    "error.invalidAmount");
+            throw new InvalidAmountException(
+                "Amount must be positive",
+                "error.invalidAmount"
+            );
         }
         if (from == to) {
-            throw new InvalidAmountException("Source and destination are the same",
-                    "error.sameAccount");
+            throw new InvalidAmountException(
+                "Source and destination are the same",
+                "error.sameAccount"
+            );
         }
         if (amount > from.getBalance()) {
-            throw new InsufficientFundException("Insufficient funds",
-                    from.getBalance(), amount);
+            throw new InsufficientFundException(
+                "Insufficient funds",
+                from.getBalance(),
+                amount
+            );
         }
+
         double convertedAmount = amount;
+
         if (!from.getCurrency().equals(to.getCurrency())) {
             ExchangeRateManager erm = ExchangeRateManager.getInstance();
-            convertedAmount = erm.convert(amount, from.getCurrency(), to.getCurrency());
+            convertedAmount = erm.convert(
+                amount,
+                from.getCurrency(),
+                to.getCurrency()
+            );
         }
+
         from.withdraw(amount);
         to.deposit(convertedAmount);
         TransactionRecord r = new TransactionRecord(
-                "transfer", amount, from.getCurrency(),
-                from.getAccountNumber(), to.getAccountNumber(),
-                convertedAmount, to.getCurrency(), currentCardNumber);
+            "transfer",
+            amount,
+            from.getCurrency(),
+            from.getAccountNumber(),
+            to.getAccountNumber(),
+            convertedAmount,
+            to.getCurrency(),
+            currentCardNumber
+        );
+
         try {
             db.transferFunds(from, to, r);
         } catch (SQLException e) {
             from.deposit(amount);
             to.withdraw(convertedAmount);
-            throw new InvalidAmountException("Transfer failed, please try again later",
-                    "error.transferFailed");
+
+            throw new InvalidAmountException(
+                "Transfer failed, please try again later",
+                "error.transferFailed"
+            );
         }
+
         transactionHistory.add(r);
+
         return r.format("", "", actionLabel, fromWord, toWord);
     }
 
@@ -225,9 +326,15 @@ public class TransactionController {
      * @param toWord   the localized word for "to"
      * @return a list of formatted transaction strings
      */
-    public List<String> getFormattedHistory(String wLabel, String dLabel,
-            String tLabel, String fromWord, String toWord) {
+    public List<String> getFormattedHistory(
+        String wLabel,
+        String dLabel,
+        String tLabel,
+        String fromWord,
+        String toWord
+    ) {
         List<String> result = new ArrayList<>();
+
         for (TransactionRecord r : transactionHistory) {
             result.add(r.format(wLabel, dLabel, tLabel, fromWord, toWord));
         }

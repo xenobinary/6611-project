@@ -4,12 +4,12 @@
 public class AccountLockedException extends Exception {
     /** The i18n key for the user-facing error message. */
     private String errorKey;
-
     /**
      * Constructs an AccountLockedException with a default error key.
      *
      * @param message the detail message
      */
+
     public AccountLockedException(String message) {
         super(message);
         this.errorKey = "error.locked";
@@ -21,6 +21,7 @@ public class AccountLockedException extends Exception {
      * @param message  the detail message
      * @param errorKey the i18n key for the error message
      */
+
     public AccountLockedException(String message, String errorKey) {
         super(message);
         this.errorKey = errorKey;

@@ -3,6 +3,7 @@
  * Handles authentication, account locking after failed attempts, and basic user identity.
  */
 public abstract class User {
+
     /** The card number used for login identification. */
     protected String cardNumber;
     /** The plaintext PIN (only used during initial seed; actual auth uses DB hash). */
@@ -23,6 +24,7 @@ public abstract class User {
      * @param pin        the plaintext PIN
      * @param userName   the display name
      */
+
     public User(String cardNumber, String pin, String userName) {
         this.cardNumber = cardNumber;
         this.pin = pin;
@@ -37,6 +39,7 @@ public abstract class User {
      *
      * @return true if lockable, false otherwise
      */
+
     public boolean canBeLocked() {
         return true;
     }
@@ -49,18 +52,24 @@ public abstract class User {
      * @param inputPin the PIN to validate
      * @return true if authentication succeeded
      */
+
     public boolean authenticate(String inputPin) {
         if (locked) {
             return false;
         }
+
         if (this.pin.equals(inputPin)) {
             failedAttempts = 0;
+
             return true;
         }
+
         if (!canBeLocked()) {
             return false;
         }
+
         failedAttempts++;
+
         if (failedAttempts >= MAX_FAILED_ATTEMPTS) {
             locked = true;
         }
@@ -70,6 +79,7 @@ public abstract class User {
     /**
      * Unlocks the account and resets the failed attempt counter.
      */
+
     public void unlock() {
         this.locked = false;
         this.failedAttempts = 0;
@@ -80,6 +90,7 @@ public abstract class User {
      *
      * @return true if locked
      */
+
     public boolean isLocked() {
         return locked;
     }
@@ -89,6 +100,7 @@ public abstract class User {
      *
      * @return the failed attempt count
      */
+
     public int getFailedAttempts() {
         return failedAttempts;
     }
@@ -98,6 +110,7 @@ public abstract class User {
      *
      * @return the card number string
      */
+
     public String getCardNumber() {
         return cardNumber;
     }
@@ -107,6 +120,7 @@ public abstract class User {
      *
      * @return the user name
      */
+
     public String getUserName() {
         return userName;
     }

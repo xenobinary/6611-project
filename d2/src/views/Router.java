@@ -36,5 +36,12 @@ public interface Router {
      * @param history       whether the user was viewing history
      * @param balance       whether the user was viewing balances
      */
-    void showLanguageSelector(String previousState, String action, Account selectedAcc, Account destAcc, boolean history, boolean balance);
+    void showLanguageSelector(
+        String previousState,
+        String action,
+        Account selectedAcc,
+        Account destAcc,
+        boolean history,
+        boolean balance
+    );
 }

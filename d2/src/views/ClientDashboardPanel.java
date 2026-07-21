@@ -16,7 +16,7 @@ public class ClientDashboardPanel extends BaseViewPanel implements NumpadListene
     private DefaultTableModel listModel;
     /** Table for displaying account lists and data. */
     private JTable listTable;
-    
+
     /** The current transaction action ("withdraw", "deposit", "transfer", "balance", "history"). */
     private String action;
     /** The currently selected source account. */
@@ -27,7 +27,6 @@ public class ClientDashboardPanel extends BaseViewPanel implements NumpadListene
     private List<Account> accList;
     /** Index within accList of the currently highlighted item. */
     private int accIdx;
-    
     /**
      * Current sub-state: "welcome", "balances", "acc_select", "dest_select",
      * "amount", "confirm", "history", or "result".
@@ -53,10 +52,12 @@ public class ClientDashboardPanel extends BaseViewPanel implements NumpadListene
         listModel = new DefaultTableModel() {
             public boolean isCellEditable(int r, int c) { return false; }
         };
+
         listTable = new JTable(listModel) {
             protected void processMouseEvent(java.awt.event.MouseEvent e) {}
             protected void processMouseMotionEvent(java.awt.event.MouseEvent e) {}
         };
+
         listTable.setRowHeight(28);
         listTable.setFont(new Font("SansSerif", Font.PLAIN, 15));
         listTable.getTableHeader().setFont(new Font("SansSerif", Font.BOLD, 13));
@@ -65,11 +66,11 @@ public class ClientDashboardPanel extends BaseViewPanel implements NumpadListene
         listTable.setIntercellSpacing(new Dimension(0, 0));
         listTable.setRowSelectionAllowed(true);
         listTable.setColumnSelectionAllowed(false);
-        
+
         JScrollPane sp = new JScrollPane(listTable);
         sp.setBorder(BorderFactory.createEmptyBorder());
         centerPanel.add(sp, BorderLayout.CENTER);
-        
+
         centerTitle.setVisible(true);
         centerText.setVisible(true);
     }
@@ -77,12 +78,12 @@ public class ClientDashboardPanel extends BaseViewPanel implements NumpadListene
     @Override
     public void onShow() {
         resetSideColors(new Color(0, 51, 102), new Color(0, 80, 140));
-        leftPanel.setVisible(true); 
+        leftPanel.setVisible(true);
         rightPanel.setVisible(true);
 
-        for (int i = 0; i < BTN_COUNT; i++) { 
-            leftBtns[i].setVisible(true); 
-            rightBtns[i].setVisible(true); 
+        for (int i = 0; i < BTN_COUNT; i++) {
+            leftBtns[i].setVisible(true);
+            rightBtns[i].setVisible(true);
         }
 
         leftBtns[0].setText(h("menu.withdraw", "Withdraw"));
@@ -107,9 +108,9 @@ public class ClientDashboardPanel extends BaseViewPanel implements NumpadListene
         clearListeners(rightBtns[0]);
         rightBtns[0].addActionListener(e -> { highlightSideBtn("history"); showHistory(); });
         clearListeners(rightBtns[1]);
-        rightBtns[1].addActionListener(e -> { 
+        rightBtns[1].addActionListener(e -> {
             router.getTransactionController().setCurrentUser("");
-            router.getAuthController().logout(); 
+            router.getAuthController().logout();
             router.navigateTo("login");
         });
         clearListeners(rightBtns[4]);
@@ -133,11 +134,18 @@ public class ClientDashboardPanel extends BaseViewPanel implements NumpadListene
      * @param isHistory whether the user was viewing history
      * @param isBalance whether the user was viewing balances
      */
-    public void restoreState(String act, Account acc, Account dest, boolean isHistory, boolean isBalance) {
+    public void restoreState(
+        String act,
+        Account acc,
+        Account dest,
+        boolean isHistory,
+        boolean isBalance
+    ) {
         onShow();
         this.action = act;
         this.selectedAcc = acc;
         this.destAcc = dest;
+
         if (isHistory) {
             showHistory();
             highlightSideBtn("history");
@@ -157,11 +165,13 @@ public class ClientDashboardPanel extends BaseViewPanel implements NumpadListene
     private void highlightSideBtn(String which) {
         Color base = new Color(0, 80, 140);
         Color hl = new Color(255, 180, 40);
+
         for (int i = 0; i < BTN_COUNT; i++) {
             leftBtns[i].setBackground(base);
             rightBtns[i].setBackground(base);
         }
         if (which == null) return;
+
         switch (which) {
             case "withdraw": leftBtns[0].setBackground(hl); break;
             case "deposit":  leftBtns[1].setBackground(hl); break;
@@ -175,12 +185,13 @@ public class ClientDashboardPanel extends BaseViewPanel implements NumpadListene
     private void showWelcome() {
         subState = "welcome";
         highlightSideBtn(null);
+
         User u = router.getAuthController().getCurrentUser();
         centerTitle.setText(i18n.get("label.welcome", "Welcome") + ", " + (u != null ? u.getUserName() : ""));
-        listModel.setColumnIdentifiers(new String[]{""});
+        listModel.setColumnIdentifiers(new String[] { "" });
         listModel.setRowCount(0);
-        listModel.addRow(new Object[]{i18n.get("label.selectTransaction", "Please select a transaction.")});
-        listModel.addRow(new Object[]{i18n.get("label.useButtons", "Use the buttons on the sides.")});
+        listModel.addRow(new Object[] { i18n.get("label.selectTransaction", "Please select a transaction.") });
+        listModel.addRow(new Object[] { i18n.get("label.useButtons", "Use the buttons on the sides.") });
         centerText.setText("");
         rightBtns[2].setVisible(false);
         rightBtns[3].setVisible(false);
@@ -191,6 +202,7 @@ public class ClientDashboardPanel extends BaseViewPanel implements NumpadListene
         subState = "balances";
         rightBtns[2].setVisible(false);
         rightBtns[3].setVisible(false);
+
         User u = router.getAuthController().getCurrentUser();
         centerTitle.setText(i18n.get("label.accounts", "Account Balances"));
         listModel.setColumnIdentifiers(new String[]{
@@ -198,10 +210,13 @@ public class ClientDashboardPanel extends BaseViewPanel implements NumpadListene
                 i18n.get("table.accountType", "Type"),
                 i18n.get("table.balance", "Balance")});
         listModel.setRowCount(0);
+
         BankClient c = (BankClient) u;
+
         for (Account a : c.getAccounts())
             listModel.addRow(new Object[]{a.getAccountNumber(), t(a.getAccountType()),
                     String.format("%.2f %s", a.getBalance(), a.getCurrency())});
+
         centerText.setText("");
     }
 
@@ -210,17 +225,21 @@ public class ClientDashboardPanel extends BaseViewPanel implements NumpadListene
         subState = "history";
         rightBtns[2].setVisible(false);
         rightBtns[3].setVisible(false);
+
         centerTitle.setText(i18n.get("menu.history", "Transaction History"));
-        listModel.setColumnIdentifiers(new String[]{""});
+        listModel.setColumnIdentifiers(new String[] { "" });
         listModel.setRowCount(0);
+
         List<String> h = router.getTransactionController().getFormattedHistory(
                 i18n.get("history.withdraw", "Withdrawal"),
                 i18n.get("history.deposit", "Deposit"),
                 i18n.get("history.transfer", "Transfer"),
                 i18n.get("word.from", "from"),
                 i18n.get("word.to", "to"));
+
         if (h.isEmpty()) listModel.addRow(new Object[]{i18n.get("info.noHistory", "No transactions yet.")});
         else for (String r : h) listModel.addRow(new Object[]{r});
+
         centerText.setText("");
     }
 
@@ -228,6 +247,7 @@ public class ClientDashboardPanel extends BaseViewPanel implements NumpadListene
     private void toAccountSelect() {
         subState = "acc_select";
         BankClient c = (BankClient) router.getAuthController().getCurrentUser();
+
         if ("withdraw".equals(action) || "deposit".equals(action)) {
             accList = new java.util.ArrayList<>();
             for (Account a : c.getAccounts())
@@ -235,8 +255,12 @@ public class ClientDashboardPanel extends BaseViewPanel implements NumpadListene
         } else {
             accList = c.getAccounts();
         }
+
         if (accList.isEmpty()) return;
-        accIdx = 0; selectedAcc = null; destAcc = null;
+
+        accIdx = 0;
+        selectedAcc = null;
+        destAcc = null;
 
         centerTitle.setText(action.equals("transfer")
                 ? i18n.get("label.fromAccount", "From Account")
@@ -249,8 +273,8 @@ public class ClientDashboardPanel extends BaseViewPanel implements NumpadListene
         }, () -> {
             if (accIdx < accList.size() - 1) { accIdx++; refreshAccList(); }
         });
-        
-        numpadPanel.setOkText(i18n.get("button.ok", "OK")); 
+
+        numpadPanel.setOkText(i18n.get("button.ok", "OK"));
         numpadPanel.setCancelText(i18n.get("button.cancel", "Cancel"));
     }
 
@@ -261,13 +285,16 @@ public class ClientDashboardPanel extends BaseViewPanel implements NumpadListene
                 i18n.get("table.accountType", "Type"),
                 i18n.get("table.balance", "Balance")});
         listModel.setRowCount(0);
+
         for (int i = 0; i < accList.size(); i++) {
             Account a = accList.get(i);
             String prefix = (i == accIdx) ? "> " : "  ";
             listModel.addRow(new Object[]{a.getAccountNumber(), t(a.getAccountType()),
                     prefix + String.format("%.2f %s", a.getBalance(), a.getCurrency())});
         }
+
         listTable.setRowSelectionInterval(accIdx, accIdx);
+
         if (accList.size() > 1) {
             rightBtns[2].setVisible(true);
             rightBtns[3].setVisible(true);
@@ -275,6 +302,7 @@ public class ClientDashboardPanel extends BaseViewPanel implements NumpadListene
             rightBtns[2].setVisible(false);
             rightBtns[3].setVisible(false);
         }
+
     }
 
     /** Navigates to the destination account selection step (for transfers). */
@@ -282,7 +310,10 @@ public class ClientDashboardPanel extends BaseViewPanel implements NumpadListene
         subState = "dest_select";
         BankClient c = (BankClient) router.getAuthController().getCurrentUser();
         accList = c.getAccounts();
-        accIdx = 0; destAcc = null;
+
+        accIdx = 0;
+        destAcc = null;
+
         centerTitle.setText(i18n.get("label.toAccount", "To Account"));
         centerText.setText(i18n.get("label.useArrows", "Use arrows or number keys, then OK"));
         refreshDestList();
@@ -301,20 +332,23 @@ public class ClientDashboardPanel extends BaseViewPanel implements NumpadListene
                 i18n.get("table.accountType", "Type"),
                 i18n.get("table.balance", "Balance")});
         listModel.setRowCount(0);
+
         for (int i = 0; i < accList.size(); i++) {
             Account a = accList.get(i);
+
             if (a == selectedAcc) continue;
             String prefix = (a == accList.get(accIdx)) ? "> " : "  ";
             listModel.addRow(new Object[]{a.getAccountNumber(), t(a.getAccountType()),
                     prefix + String.format("%.2f %s", a.getBalance(), a.getCurrency())});
         }
         if (accList.size() > 2) {
-            rightBtns[2].setVisible(true); 
+            rightBtns[2].setVisible(true);
             rightBtns[3].setVisible(true);
         } else {
-            rightBtns[2].setVisible(false); 
+            rightBtns[2].setVisible(false);
             rightBtns[3].setVisible(false);
         }
+
     }
 
     /** Navigates to the amount entry step. */
@@ -324,7 +358,6 @@ public class ClientDashboardPanel extends BaseViewPanel implements NumpadListene
                 ? i18n.get("menu.transfer", "Transfer") + ": " + selectedAcc.getAccountNumber()
                 + " \u2192 " + destAcc.getAccountNumber()
                 : i18n.get("menu." + action, action) + ": " + selectedAcc.getAccountNumber());
-
         listModel.setColumnIdentifiers(new String[]{
                 i18n.get("table.accountNumber", "Account #"),
                 i18n.get("table.accountType", "Type"),
@@ -334,7 +367,7 @@ public class ClientDashboardPanel extends BaseViewPanel implements NumpadListene
                 String.format("%.2f %s", selectedAcc.getBalance(), selectedAcc.getCurrency())});
         centerText.setText(i18n.get("label.enterAmount", "Enter amount: ") + "0 " + selectedAcc.getCurrency());
 
-        rightBtns[2].setVisible(false); 
+        rightBtns[2].setVisible(false);
         rightBtns[3].setVisible(false);
 
         amountBuf.setLength(0);
@@ -352,6 +385,7 @@ public class ClientDashboardPanel extends BaseViewPanel implements NumpadListene
                 selectedAcc.getAccountNumber()});
         listModel.addRow(new Object[]{i18n.get("label.amount", "Amount") + ":",
                 String.format("%.2f %s", amount, selectedAcc.getCurrency())});
+
         if (destAcc != null)
             listModel.addRow(new Object[]{i18n.get("label.to", "To") + ":",
                     destAcc.getAccountNumber() + " " + destAcc.getCurrency()});
@@ -365,18 +399,24 @@ public class ClientDashboardPanel extends BaseViewPanel implements NumpadListene
         listModel.setRowCount(0);
         listModel.addRow(new Object[]{result});
         centerText.setText("<html><font color=green>" + i18n.get("label.success", "Success") + "</font></html>");
+
         Timer t = new Timer(2500, e -> {
-            selectedAcc = null; destAcc = null; 
+            selectedAcc = null;
+            destAcc = null;
             onShow();
         });
-        t.setRepeats(false); t.start();
+
+        t.setRepeats(false);
+        t.start();
     }
 
     /** Sets up the up/down arrow buttons for list navigation. */
     private void setupArrowButtons(Runnable upAction, Runnable downAction) {
-        rightBtns[2].setVisible(true); rightBtns[3].setVisible(true);
+        rightBtns[2].setVisible(true);
+        rightBtns[3].setVisible(true);
         rightBtns[2].setText(h("button.up", "\u25B2"));
         rightBtns[3].setText(h("button.down", "\u25BC"));
+
         clearListeners(rightBtns[2]);
         rightBtns[2].addActionListener(e -> upAction.run());
         clearListeners(rightBtns[3]);
@@ -385,84 +425,110 @@ public class ClientDashboardPanel extends BaseViewPanel implements NumpadListene
 
     /** Convenience method for retrieving localized account type strings. */
     private String t(String key) { return i18n.get("account." + key, key); }
-
     // --- Numpad Listener ---
 
     @Override
     public void onNumber(int n) {
+
         if (subState.equals("acc_select")) {
+
             if (n >= 1 && n <= accList.size()) {
                 accIdx = n - 1; refreshAccList();
             }
+
         } else if (subState.equals("dest_select")) {
+
             if (n >= 1 && n <= accList.size()) {
                 Account a = accList.get(n - 1);
+
                 if (a != selectedAcc) { accIdx = n - 1; refreshDestList(); }
             }
+
         } else if (subState.equals("amount")) {
+
             if (dotEntered && amountBuf.indexOf(".") >= 0 && amountBuf.length() - amountBuf.indexOf(".") > 2) return;
+
             if (amountBuf.toString().equals("0") && n != 0) { amountBuf.setLength(0); amountBuf.append(n); }
             else if (!amountBuf.toString().equals("0")) amountBuf.append(n);
             centerText.setText(i18n.get("label.enterAmount", "Enter amount: ") + amountBuf.toString() + " " + selectedAcc.getCurrency());
         }
+
     }
 
     @Override
     public void onDot() {
+
         if (subState.equals("amount")) {
+
             if (!dotEntered) { dotEntered = true; amountBuf.append("."); }
             centerText.setText(i18n.get("label.enterAmount", "Enter amount: ") + amountBuf.toString() + " " + selectedAcc.getCurrency());
         }
+
     }
 
     @Override
     public void onClear() {
+
         if (subState.equals("amount")) {
             amountBuf.setLength(0); amountBuf.append("0"); dotEntered = false;
             centerText.setText(i18n.get("label.enterAmount", "Enter amount: ") + "0 " + selectedAcc.getCurrency());
         } else if (subState.equals("acc_select") || subState.equals("dest_select")) {
             onShow();
         }
+
     }
 
     @Override
     public void onDelete() {
+
         if (subState.equals("amount")) {
-            if (amountBuf.length() > 0) { 
+
+            if (amountBuf.length() > 0) {
+
                 if (amountBuf.charAt(amountBuf.length()-1)=='.') dotEntered=false;
-                amountBuf.setLength(amountBuf.length()-1); 
-                if (amountBuf.length()==0) amountBuf.append("0"); 
+                amountBuf.setLength(amountBuf.length()-1);
+
+                if (amountBuf.length()==0) amountBuf.append("0");
             }
+
             centerText.setText(i18n.get("label.enterAmount", "Enter amount: ") + amountBuf.toString() + " " + selectedAcc.getCurrency());
         } else if (subState.equals("acc_select") || subState.equals("dest_select")) {
             onShow();
         }
+
     }
 
     @Override
     public void onOk() {
+
         if (subState.equals("acc_select")) {
             selectedAcc = accList.get(accIdx);
+
             if (action.equals("transfer")) toDestSelect();
             else toAmountEntry();
         } else if (subState.equals("dest_select")) {
             destAcc = accList.get(accIdx);
+
             if (destAcc == selectedAcc) return;
             toAmountEntry();
         } else if (subState.equals("amount")) {
+
             try {
                 double amt = Double.parseDouble(amountBuf.toString());
                 toConfirm(amt);
             } catch (NumberFormatException ex) {
                 centerText.setText("<html><font color=red>" + i18n.get("error.invalidAmount", "Invalid amount") + "</font></html>");
             }
+
         } else if (subState.equals("confirm")) {
             double amount = Double.parseDouble(amountBuf.toString());
             TransactionController txn = router.getTransactionController();
+
             try {
                 String result;
                 String fw = i18n.get("word.from", "from");
                 String tw = i18n.get("word.to", "to");
+
                 if ("withdraw".equals(action)) {
                     result = txn.withdraw(selectedAcc, amount,
                             i18n.get("history.withdraw", "Withdrawal"),
@@ -477,6 +543,7 @@ public class ClientDashboardPanel extends BaseViewPanel implements NumpadListene
                             i18n.get("history.transfer", "Transfer"),
                             fw, tw);
                 }
+
                 showResult(result);
             } catch (InsufficientFundException ex) {
                 centerText.setText("<html><font color=red>" + i18n.get("error.insufficientFunds", "Insufficient funds") + "</font></html>");
@@ -485,26 +552,32 @@ public class ClientDashboardPanel extends BaseViewPanel implements NumpadListene
                 centerText.setText("<html><font color=red>" + i18n.get(ex.getErrorKey(), ex.getMessage()) + "</font></html>");
                 Timer t = new Timer(1500, ev -> toAmountEntry()); t.setRepeats(false); t.start();
             }
+
         }
+
     }
 
     @Override
     public void onCancel() {
+
         if (!subState.equals("welcome") && !subState.equals("balances") && !subState.equals("history") && !subState.equals("result")) {
             selectedAcc = null; destAcc = null;
             onShow();
         }
+
     }
 
     @Override
     public void onLanguageChanged(String language) {
+
         if (isVisible()) {
+
             if (rightBtns[4].isVisible()) {
                 rightBtns[4].setText(language.toUpperCase());
             }
+
             numpadPanel.setOkText(i18n.get("button.ok", "OK"));
             numpadPanel.setCancelText(i18n.get("button.cancel", "Cancel"));
-            
             leftBtns[0].setText(h("menu.withdraw", "Withdraw"));
             leftBtns[1].setText(h("menu.deposit", "Deposit"));
             leftBtns[2].setText(h("menu.transfer", "Transfer"));
@@ -512,5 +585,6 @@ public class ClientDashboardPanel extends BaseViewPanel implements NumpadListene
             rightBtns[0].setText(h("button.history", "History"));
             rightBtns[1].setText(h("button.logout", "Logout"));
         }
+
     }
 }

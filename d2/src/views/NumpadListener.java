@@ -1,5 +1,6 @@
 /**
- * Listener interface for numpad input events.
+ * Listener
+interface for numpad input events.
  * Implemented by panels that need to respond to numeric keypad presses,
  * dot entry, clear/delete, and OK/cancel actions.
  */

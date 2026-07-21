@@ -3,6 +3,7 @@
  * Manages the current cash level, dispensing, refilling, and low-cash detection.
  */
 public class CashBox {
+
     /** The singleton instance. */
     private static CashBox instance;
     /** The current amount of cash in the machine. */
@@ -13,6 +14,7 @@ public class CashBox {
     private double lowThreshold;
 
     /** Private constructor; initializes with default cash levels. */
+
     private CashBox() {
         this.maxCapacity = 50000.0;
         this.currentCash = 20000.0;
@@ -24,6 +26,7 @@ public class CashBox {
      *
      * @return the CashBox instance
      */
+
     public static CashBox getInstance() {
         if (instance == null) {
             instance = new CashBox();
@@ -36,6 +39,7 @@ public class CashBox {
      *
      * @return true if current cash is zero or less
      */
+
     public boolean isEmpty() {
         return currentCash <= 0.0;
     }
@@ -45,6 +49,7 @@ public class CashBox {
      *
      * @return true if cash is low
      */
+
     public boolean isLow() {
         return currentCash > 0.0 && currentCash <= lowThreshold;
     }
@@ -55,6 +60,7 @@ public class CashBox {
      * @param amount the amount to check
      * @return true if sufficient cash is available
      */
+
     public boolean hasSufficientCash(double amount) {
         return currentCash >= amount;
     }
@@ -65,6 +71,7 @@ public class CashBox {
      *
      * @param amount the amount to dispense
      */
+
     public void dispense(double amount) {
         if (amount <= currentCash) {
             currentCash -= amount;
@@ -74,6 +81,7 @@ public class CashBox {
     /**
      * Refills the cash box to its maximum capacity.
      */
+
     public void refill() {
         currentCash = maxCapacity;
     }
@@ -84,11 +92,14 @@ public class CashBox {
      * @param amount the target cash level (must be between 0 and max capacity)
      * @return true if the refill was accepted
      */
+
     public boolean refillTo(double amount) {
         if (amount <= 0 || amount > maxCapacity) {
             return false;
         }
+
         currentCash = amount;
+
         return true;
     }
 
@@ -97,6 +108,7 @@ public class CashBox {
      *
      * @return the current cash amount
      */
+
     public double getCurrentCash() {
         return currentCash;
     }
@@ -106,6 +118,7 @@ public class CashBox {
      *
      * @return the max capacity
      */
+
     public double getMaxCapacity() {
         return maxCapacity;
     }
@@ -115,6 +128,7 @@ public class CashBox {
      *
      * @return the low threshold amount
      */
+
     public double getLowThreshold() {
         return lowThreshold;
     }
@@ -122,6 +136,7 @@ public class CashBox {
     /**
      * Resets the singleton instance (mainly for testing).
      */
+
     public static void resetInstance() {
         instance = null;
     }

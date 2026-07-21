@@ -8,6 +8,7 @@ import java.util.Map;
  * and persisting user and account state changes.
  */
 public class AuthenticationController {
+
     /** In-memory cache of all users, keyed by card number. */
     private Map<String, User> userDatabase;
     /** The currently authenticated user, or null if no one is logged in. */
@@ -18,10 +19,12 @@ public class AuthenticationController {
     /**
      * Constructs a new AuthenticationController and loads all users from the database.
      */
+
     public AuthenticationController() {
         userDatabase = new HashMap<>();
         currentUser = null;
         db = DatabaseManager.getInstance();
+
         try {
             userDatabase = db.loadUsers();
         } catch (SQLException e) {
@@ -40,15 +43,25 @@ public class AuthenticationController {
      * @throws AccountLockedException if the account is locked or becomes locked
      */
     public User authenticate(String cardNumber, String pin)
-            throws AccountLockedException {
+        throws AccountLockedException {
         User user = userDatabase.get(cardNumber);
+
         if (user == null) {
-            throw new AccountLockedException("Invalid card number", "error.invalidCard");
+            throw new AccountLockedException(
+                "Invalid card number",
+                "error.invalidCard"
+            );
         }
         if (user.isLocked()) {
-            throw new AccountLockedException("Account is locked", "error.locked");
+            throw new AccountLockedException(
+                "Account is locked",
+                "error.locked"
+            );
         }
+
+
         boolean valid = false;
+
         try {
             valid = db.verifyPin(cardNumber, pin);
         } catch (SQLException e) {
@@ -56,29 +69,39 @@ public class AuthenticationController {
         }
         if (!valid) {
             user.authenticate("wrong");
+
             try {
                 db.updateUserState(user);
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
+
             if (user.isLocked()) {
-                throw new AccountLockedException("Account locked after too many attempts", "error.lockedAttempts");
+                throw new AccountLockedException(
+                    "Account locked after too many attempts",
+                    "error.lockedAttempts"
+                );
             }
             return null;
         }
+
         user.unlock();
+
         try {
             db.updateUserState(user);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
+
         currentUser = user;
+
         return user;
     }
 
     /**
      * Logs out the current user by setting currentUser to null.
      */
+
     public void logout() {
         currentUser = null;
     }
@@ -88,6 +111,7 @@ public class AuthenticationController {
      *
      * @return the current user, or null if not logged in
      */
+
     public User getCurrentUser() {
         return currentUser;
     }
@@ -97,6 +121,7 @@ public class AuthenticationController {
      *
      * @return a map of card numbers to User objects
      */
+
     public Map<String, User> getUserDatabase() {
         return userDatabase;
     }
@@ -106,6 +131,7 @@ public class AuthenticationController {
      *
      * @param account the account to persist
      */
+
     public void persistAccount(Account account) {
         try {
             db.updateAccountBalance(account);
@@ -119,6 +145,7 @@ public class AuthenticationController {
      *
      * @param user the user to persist
      */
+
     public void persistUserState(User user) {
         try {
             db.updateUserState(user);

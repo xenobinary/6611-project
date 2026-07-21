@@ -3,6 +3,7 @@
  * and manage exchange rates. System admins cannot be locked out after failed logins.
  */
 public class SystemAdmin extends User {
+
     /**
      * Constructs a new SystemAdmin.
      *
@@ -10,6 +11,7 @@ public class SystemAdmin extends User {
      * @param pin        the plaintext PIN
      * @param userName   the display name
      */
+
     public SystemAdmin(String cardNumber, String pin, String userName) {
         super(cardNumber, pin, userName);
     }
@@ -19,6 +21,7 @@ public class SystemAdmin extends User {
      *
      * @param user the user to unlock (may be null, in which case nothing happens)
      */
+
     public void unlockUser(User user) {
         if (user != null) {
             user.unlock();
