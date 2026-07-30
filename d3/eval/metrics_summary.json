@@ -1,0 +1,74 @@
+{
+  "measurement_baseline": {
+    "commit": "e616e598ece800477163988abdfc4f3ab0757cb4",
+    "date_measured": "2026-07-24",
+    "java_files": 25,
+    "classes": 23,
+    "interfaces": 2
+  },
+  "cyclomatic_complexity": {
+    "total_wmc_all_classes": 474,
+    "method_count": 239,
+    "mean_per_method": 1.9832635983263598,
+    "maximum_method": {
+      "cc": 12,
+      "function": "@Overridepublic void onOk",
+      "type": "ClientDashboardPanel"
+    },
+    "method_bands": {
+      "low_1_to_10": 238,
+      "moderate_11_to_20": 1,
+      "high_21_to_50": 0,
+      "very_high_over_50": 0
+    }
+  },
+  "oo_metrics": {
+    "system_cf": 0.11833333333333333,
+    "directed_couplings": 71,
+    "wmc_over_100_classes": [],
+    "cf_highest_types": [
+      "ClientDashboardPanel",
+      "LoginPanel",
+      "MainFrame"
+    ],
+    "lcom_at_or_above_0_8_classes": [
+      "Account",
+      "BaseViewPanel",
+      "InsufficientFundException",
+      "LanguageSelectorPanel",
+      "MainFrame",
+      "NumpadPanel",
+      "TechnicianPanel",
+      "User"
+    ]
+  },
+  "correlation": {
+    "n_classes": 23,
+    "primary_coefficient": "Spearman rank correlation",
+    "spearman_rho": 0.9548621683481888,
+    "pearson_r_sensitivity": 0.9805409562683438,
+    "pearson_r_squared_sensitivity": 0.9614605669196381,
+    "logical_sloc_skewness": 2.0562835097065584,
+    "wmc_skewness": 2.3685585823268203,
+    "selection_rationale": "Both variables are strongly right-skewed; the lecture recommends Spearman for non-normally distributed attribute values.",
+    "slope": 0.23059625230911404,
+    "intercept": 1.3889993184099332,
+    "largest_positive_residuals": [
+      "ClientDashboardPanel",
+      "CashBox",
+      "TransactionController"
+    ],
+    "largest_negative_residuals": [
+      "BaseViewPanel",
+      "NumpadPanel",
+      "DatabaseManager"
+    ]
+  },
+  "interpretation_bands": {
+    "cyclomatic_per_method": "1-10 low; 11-20 moderate; 21-50 high; >50 very high",
+    "wmc_lecture_threshold": "WMC > 100 indicates Broken Modularization; lower is better",
+    "cf_lecture_guidance": "Lower is better; the lecture provides no universal numeric threshold",
+    "lcom_star_lecture_threshold": "LCOM* >= 0.8 indicates Multifaceted Abstraction",
+    "correlation_strength": "abs(coefficient) in [0.9, 1) is labelled almost perfect"
+  }
+}

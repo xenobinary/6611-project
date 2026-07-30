@@ -1,0 +1,9 @@
+id,factor,weight,rating,weighted_score,rationale
+E1,Familiarity with use case domain,1.5,3,4.5,Moderate use-case familiarity
+E2,Part-time workers,-1.0,5,-5.0,All three members are students
+E3,Analyst capability,0.5,4,2.0,Clear roles and design ownership
+E4,Application experience,0.5,2,1.0,Limited banking-domain experience
+E5,Object-oriented experience,1.0,4,4.0,Strong Java/OOP experience
+E6,Motivation,1.0,5,5.0,Course deliverable with shared ownership
+E7,Difficult programming language,-1.0,1,-1.0,Java 17 is familiar
+E8,Stable requirements,2.0,4,8.0,Course specification mostly stable

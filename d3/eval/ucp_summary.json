@@ -1,0 +1,17 @@
+{
+  "uaw": 9,
+  "uucw": 125,
+  "uucp": 134,
+  "technical_factor_sum": 39.5,
+  "tcf": 0.995,
+  "environmental_factor_sum": 18.5,
+  "ecf": 0.845,
+  "adjusted_ucp": 112.66385000000001,
+  "productivity_factor_hours_per_ucp": 20,
+  "estimated_person_hours": 2253.277,
+  "actual_person_hours_reconstructed": 168,
+  "estimate_minus_actual_hours": 2085.277,
+  "estimate_to_actual_ratio": 13.412363095238096,
+  "actual_effort_caveat": "Retrospective baseline only: 3 members x 56 hours. Replace with a team time sheet if available.",
+  "interpretation": "The uncalibrated Karner productivity factor materially overestimates this small, reusable student prototype. UCP is dependable as a comparative size model, not an exact prediction."
+}

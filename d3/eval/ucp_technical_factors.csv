@@ -1,0 +1,14 @@
+id,factor,weight,rating,weighted_score,rationale
+T1,Distributed system,2.0,0,0.0,Standalone desktop application
+T2,Response-time objectives,1.0,3,3.0,Interactive kiosk feedback
+T3,End-user efficiency,1.0,5,5.0,Core usability objective
+T4,Complex internal processing,1.0,4,4.0,"Rules, limits, conversion, DB"
+T5,Reusable code,1.0,4,4.0,"MVC, base panel, numpad, i18n"
+T6,Easy to install,0.5,4,2.0,Bundled scripts and local SQLite
+T7,Easy to use,0.5,5,2.5,ABM usability is central
+T8,Portable,2.0,4,8.0,Java plus three OS launch scripts
+T9,Easy to change,1.0,4,4.0,MVC and externalized messages
+T10,Concurrent,1.0,0,0.0,Single-user desktop process
+T11,Security,1.0,5,5.0,"PIN hashing, lockout, role routing"
+T12,Third-party access,1.0,1,1.0,Embedded JDBC only; no live network
+T13,Training needs,1.0,1,1.0,Familiar ABM interaction model

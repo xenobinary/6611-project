@@ -1,0 +1,12 @@
+id,use_case,transactions,complexity,weight,weighted_points
+UC-01,Authenticate User,7,average,10,10
+UC-02,Withdraw Cash,10,complex,15,15
+UC-03,Deposit Funds,10,complex,15,15
+UC-04,Transfer Funds,12,complex,15,15
+UC-05,Check Balance,2,simple,5,5
+UC-06,View Transaction History,4,average,10,10
+UC-07,End Session,5,average,10,10
+UC-08,Update Exchange Rate,8,complex,15,15
+UC-09,Unlock User,7,average,10,10
+UC-10,Refill Cash Box,4,average,10,10
+UC-11,Switch Language,7,average,10,10
